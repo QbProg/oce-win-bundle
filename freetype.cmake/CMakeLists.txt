@@ -52,3 +52,13 @@ SET ( FT_MODULES
 
 ADD_LIBRARY(freetype SHARED ${FT_SOURCE_FILES} ${FT_MODULES} )  
 
+FILE(GLOB_RECURSE freetype_headers "${FT_DIR}/include/*.*")
+
+INSTALL(FILES ${freetype_headers}
+	DESTINATION ${INSTALL_DIR}/include/freetype COMPONENT Development )
+	
+INSTALL(TARGETS freetype
+		ARCHIVE DESTINATION "${INSTALL_DIR}/lib/"
+		LIBRARY DESTINATION "${INSTALL_DIR}/lib/"
+		RUNTIME DESTINATION "${INSTALL_DIR}/bin/"  
+		)

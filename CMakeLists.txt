@@ -13,9 +13,3 @@ SUBDIRS(freetype.cmake)
 SUBDIRS(ftgl.cmake)
 SUBDIRS(gl2ps.cmake)
 
-
-FILE(GLOB_RECURSE freetype_headers "${FT_DIR}/include/*.*")
-
-INSTALL(FILES ${freetype_headers}
-	DESTINATION ${INSTALL_DIR}/freetype COMPONENT Development )
-
