@@ -6,10 +6,15 @@ SET(CMAKE_DEBUG_POSTFIX "d")
 SET(FT_DIR ${CMAKE_SOURCE_DIR}/libs/freetype-2.4.4)
 SET(FTGL_DIR ${CMAKE_SOURCE_DIR}/libs/ftgl-2.1.3~rc5)
 SET(GL2PS_DIR ${CMAKE_SOURCE_DIR}/libs/gl2ps-1.3.5-source)
+SET(FREEIMAGE_DIR ${CMAKE_SOURCE_DIR}/libs/FreeImage)
+SET(LIBPNG_DIR ${CMAKE_SOURCE_DIR}/libs/FreeImage/Source/LibPNG/)
+SET(ZLIB_DIR ${CMAKE_SOURCE_DIR}/libs/FreeImage/Source/zlib/)
+
 
 SET(INSTALL_DIR "C:/testinstall")
 
 SUBDIRS(freetype.cmake)
 SUBDIRS(ftgl.cmake)
 SUBDIRS(gl2ps.cmake)
+SUBDIRS(freeimage.cmake)
 
