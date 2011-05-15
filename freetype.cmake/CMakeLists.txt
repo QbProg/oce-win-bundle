@@ -53,11 +53,16 @@ SET ( FT_MODULES
 
 ADD_LIBRARY(freetype SHARED ${FT_SOURCE_FILES} ${FT_MODULES} )  
 
-FILE(GLOB_RECURSE freetype_headers "${FT_DIR}/include/*.*")
+FILE(GLOB freetype_headers "${FT_DIR}/include/*.*")
+FILE(GLOB freetype_headers_ft "${FT_DIR}/include/freetype/*.*")
+FILE(GLOB_RECURSE freetype_headers_config "${FT_DIR}/include/freetype/config/*.*")
+FILE(GLOB_RECURSE freetype_headers_int "${FT_DIR}/include/freetype/internal/*.*")
 
-INSTALL(FILES ${freetype_headers}
-	DESTINATION ${INSTALL_DIR}/include/freetype COMPONENT Development )
-	
+INSTALL (FILES ${freetype_headers} DESTINATION ${INSTALL_DIR}/include/freetype )
+INSTALL (FILES ${freetype_headers_ft} DESTINATION ${INSTALL_DIR}/include/freetype/freetype )
+INSTALL (FILES ${freetype_headers_config} DESTINATION ${INSTALL_DIR}/include/freetype/freetype/config )
+INSTALL (FILES ${freetype_headers_int} DESTINATION ${INSTALL_DIR}/include/freetype/freetype/internal )
+
 INSTALL(TARGETS freetype
 		ARCHIVE DESTINATION "${INSTALL_DIR}/lib/"
 		LIBRARY DESTINATION "${INSTALL_DIR}/lib/"

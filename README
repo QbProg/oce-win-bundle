@@ -1,1 +1,34 @@
-Dummy content
+oce-win-bundle is a redistribution of open source libraries required to fully build OCE on windows.
+
+Note that this is just a bundle of existing libraries, so please read the LICENSE for each library before continue.
+Note also that this is not meant to be a complete build environment for the included libraries. At the moment, the 
+Cmake files are just "made to work" , many paths are hardcoded or GLOBbed , and the quality level is at the minimum
+required to use the libraries with OCE.
+
+REQUIREMENTS:
+
+CMake 2.6 or greater
+Visual Studio 2008 or greater (better if SP1)
+
+
+BUILDING:
+
+To build the bundle you just need to run Cmake against the project lib.
+It is suggested to do out-of-source builds.
+
+For example, run a MSVC command prompt and type
+
+mkdir C:\<YourBuildDir>
+cd C:\<YourBuildDir>
+cmake C:\<oce-bundle-source-dir>
+
+at this point open C:\<YourBuildDir>\oce-win-bundle.sln
+
+Build both for Debug and Release.
+
+Once built, you need to explictly compile the INSTALL target, one time in Debug and one time in Release.
+This last operation will copy the required includes, libraries and binaries to the installation directory.
+
+The predefined install directory is C:\oce-win-bundle\
+If you want to change it, you can use cmake-gui
+
