@@ -10,6 +10,12 @@ SET(FREEIMAGE_DIR ${CMAKE_SOURCE_DIR}/libs/FreeImage)
 SET(LIBPNG_DIR ${CMAKE_SOURCE_DIR}/libs/FreeImage/Source/LibPNG/)
 SET(ZLIB_DIR ${CMAKE_SOURCE_DIR}/libs/FreeImage/Source/zlib/)
 
+IF (${CMAKE_SIZEOF_VOID_P} MATCHES "8") # It is 64bit, otherwise 32 bit systems match 4
+	ADD_DEFINITIONS(-D_OCC64)
+	SET(BIT 64)
+ELSE (${CMAKE_SIZEOF_VOID_P} MATCHES "8")
+  SET(BIT 32)
+ENDIF(${CMAKE_SIZEOF_VOID_P} MATCHES "8")
 
 
 IF( NOT DEFINED INSTALL_DIR )
@@ -23,6 +29,8 @@ SET( INSTALL_DIR ${INSTALL_DIR} CACHE
 SET( CMAKE_INSTALL_PREFIX "${INSTALL_DIR} " CACHE INTERNAL "Prefix
 	prepended to install directories if target destination is not absolute,
 	immutable" FORCE )
+
+SET(INSTALL_DIR_BITS ${INSTALL_DIR}/Win${BIT}/)
 
 SUBDIRS(freetype.cmake)
 SUBDIRS(ftgl.cmake)
