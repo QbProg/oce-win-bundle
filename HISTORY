@@ -1,0 +1,7 @@
+0.4.0 
+
++ Tested with NMake
+* Changed the install dir to install in Win32/lib , Win64/lib to allow installing 32bits
+and 64bits in the same prefix
+
+0.3.0 -- First Usable version
