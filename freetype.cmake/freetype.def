@@ -1,4 +1,4 @@
-LIBRARY freetype
+LIBRARY 
 EXPORTS
   FTC_CMapCache_Lookup
   FTC_CMapCache_New
