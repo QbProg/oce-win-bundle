@@ -1,11 +1,5 @@
 cmake_minimum_required(VERSION 2.6)
 
-IF(CMAKE_CONFIGURATION_TYPES)
-SET(CMAKE_CONFIGURATION_TYPES "Debug;RelWithDebInfo" CACHE STRING "" FORCE)
-ELSE()
-# Nmake
-ENDIF()
-
 PROJECT(oce-win-bundle)
 SET(CMAKE_DEBUG_POSTFIX "d")
 SET(FT_DIR ${CMAKE_SOURCE_DIR}/libs/freetype)
