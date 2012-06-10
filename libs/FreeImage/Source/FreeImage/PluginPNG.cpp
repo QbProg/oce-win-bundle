@@ -68,11 +68,13 @@ _WriteProc(png_structp png_ptr, unsigned char *data, png_size_t size) {
 
 static void
 _FlushProc(png_structp png_ptr) {
+	(png_structp)png_ptr;
 	// empty flush implementation
 }
 
 static void
 error_handler(png_structp png_ptr, const char *error) {
+	(png_structp)png_ptr;
 	throw error;
 }
 
@@ -80,6 +82,8 @@ error_handler(png_structp png_ptr, const char *error) {
 
 static void
 warning_handler(png_structp png_ptr, const char *warning) {
+	(png_structp)png_ptr;
+	(char*)warning;
 }
 
 // ==========================================================
@@ -89,7 +93,7 @@ warning_handler(png_structp png_ptr, const char *warning) {
 static BOOL 
 ReadMetadata(png_structp png_ptr, png_infop info_ptr, FIBITMAP *dib) {
 	// XMP keyword
-	char *g_png_xmp_keyword = "XML:com.adobe.xmp";
+	const char *g_png_xmp_keyword = "XML:com.adobe.xmp";
 
 	FITAG *tag = NULL;
 	png_textp text_ptr = NULL;
@@ -130,7 +134,7 @@ ReadMetadata(png_structp png_ptr, png_infop info_ptr, FIBITMAP *dib) {
 static BOOL 
 WriteMetadata(png_structp png_ptr, png_infop info_ptr, FIBITMAP *dib) {
 	// XMP keyword
-	char *g_png_xmp_keyword = "XML:com.adobe.xmp";
+	const char *g_png_xmp_keyword = "XML:com.adobe.xmp";
 
 	FITAG *tag = NULL;
 	FIMETADATA *mdhandle = NULL;
@@ -168,7 +172,7 @@ WriteMetadata(png_structp png_ptr, png_infop info_ptr, FIBITMAP *dib) {
 	if(tag && FreeImage_GetTagLength(tag)) {
 		memset(&text_metadata, 0, sizeof(png_text));
 		text_metadata.compression = 1;							// iTXt, none
-		text_metadata.key = g_png_xmp_keyword;					// keyword, 1-79 character description of "text"
+		text_metadata.key = (char*)g_png_xmp_keyword;					// keyword, 1-79 character description of "text"
 		text_metadata.text = (char*)FreeImage_GetTagValue(tag);	// comment, may be an empty string (ie "")
 		text_metadata.text_length = FreeImage_GetTagLength(tag);// length of the text string
 		text_metadata.itxt_length = FreeImage_GetTagLength(tag);// length of the itxt string
@@ -456,6 +460,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 					png_get_PLTE(png_ptr,info_ptr, &png_palette, &palette_entries);
 
+					palette_entries = MIN((unsigned)palette_entries, FreeImage_GetColorsUsed(dib));
 					palette = FreeImage_GetPalette(dib);
 
 					// store the palette
@@ -540,11 +545,11 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 				// we'll overload this var and use 0 to mean no phys data,
 				// since if it's not in meters we can't use it anyway
 
-				int res_unit_type = 0;
+				int res_unit_type = PNG_RESOLUTION_UNKNOWN;
 
 				png_get_pHYs(png_ptr,info_ptr, &res_x, &res_y, &res_unit_type);
 
-				if (res_unit_type == 1) {
+				if (res_unit_type == PNG_RESOLUTION_METER) {
 					FreeImage_SetDotsPerMeterX(dib, res_x);
 					FreeImage_SetDotsPerMeterY(dib, res_y);
 				}
@@ -554,7 +559,7 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 
 			if (png_get_valid(png_ptr, info_ptr, PNG_INFO_iCCP)) {
 				png_charp profile_name = NULL;
-				png_charp profile_data = NULL;
+				png_bytep profile_data = NULL;
 				png_uint_32 profile_length = 0;
 				int  compression_type;
 
@@ -588,11 +593,13 @@ Load(FreeImageIO *io, fi_handle handle, int page, int flags, void *data) {
 			}
 
 			// read in the bitmap bits via the pointer table
+			// allow loading of PNG with minor errors (such as images with several IDAT chunks)
 
 			for (png_uint_32 k = 0; k < height; k++) {
 				row_pointers[height - 1 - k] = FreeImage_GetScanLine(dib, k);			
 			}
 
+			png_set_benign_errors(png_ptr, 1);
 			png_read_image(png_ptr, row_pointers);
 
 			// check if the bitmap contains transparency, if so enable it in the header
@@ -703,7 +710,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 			png_uint_32 res_y = (png_uint_32)FreeImage_GetDotsPerMeterY(dib);
 
 			if ((res_x > 0) && (res_y > 0))  {
-				png_set_pHYs(png_ptr, info_ptr, res_x, res_y, 1);
+				png_set_pHYs(png_ptr, info_ptr, res_x, res_y, PNG_RESOLUTION_METER);
 			}
 	
 			// Set the image information here.  Width and height are up to 2^31,
@@ -826,7 +833,7 @@ Save(FreeImageIO *io, FIBITMAP *dib, fi_handle handle, int page, int flags, void
 
 			FIICCPROFILE *iccProfile = FreeImage_GetICCProfile(dib);
 			if (iccProfile->size && iccProfile->data) {
-				png_set_iCCP(png_ptr, info_ptr, "Embedded Profile", 0, (png_charp)iccProfile->data, iccProfile->size);
+				png_set_iCCP(png_ptr, info_ptr, "Embedded Profile", 0, (png_const_bytep)iccProfile->data, iccProfile->size);
 			}
 
 			// write metadata

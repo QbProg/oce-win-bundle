@@ -28,9 +28,9 @@
 
 // ==========================================================
 // CVS
-// $Revision: 1.11 $
-// $Date: 2009/09/15 11:49:52 $
-// $Id: FreeImageBitmap.cs,v 1.11 2009/09/15 11:49:52 cklein05 Exp $
+// $Revision: 1.12 $
+// $Date: 2011/12/22 14:54:22 $
+// $Id: FreeImageBitmap.cs,v 1.12 2011/12/22 14:54:22 drolon Exp $
 // ==========================================================
 
 using System;
@@ -610,7 +610,7 @@ namespace FreeImageAPI
 			: this(width, height)
 		{
 			FreeImage.SetResolutionX(dib, (uint)g.DpiX);
-			FreeImage.SetResolutionX(dib, (uint)g.DpiY);
+			FreeImage.SetResolutionY(dib, (uint)g.DpiY);
 		}
 
 		/// <summary>

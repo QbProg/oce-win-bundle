@@ -28,9 +28,9 @@
 
 // ==========================================================
 // CVS
-// $Revision: 1.17 $
-// $Date: 2009/12/21 20:22:33 $
-// $Id: FreeImageWrapper.cs,v 1.17 2009/12/21 20:22:33 cklein05 Exp $
+// $Revision: 1.19 $
+// $Date: 2011/10/02 13:00:45 $
+// $Id: FreeImageWrapper.cs,v 1.19 2011/10/02 13:00:45 drolon Exp $
 // ==========================================================
 
 using System;
@@ -179,10 +179,10 @@ namespace FreeImageAPI
 				Version wrapperVersion = GetWrapperVersion();
 				// No exception thrown, the library seems to be present
 				return
-				(nativeVersion.Major >= wrapperVersion.Major) &&
-				(nativeVersion.Minor >= wrapperVersion.Minor) &&
-				(nativeVersion.Build >= wrapperVersion.Build);
-			}
+                    (nativeVersion.Major > wrapperVersion.Major) ||
+                    ((nativeVersion.Major == wrapperVersion.Major) && (nativeVersion.Minor > wrapperVersion.Minor)) ||
+                    ((nativeVersion.Major == wrapperVersion.Major) && (nativeVersion.Minor == wrapperVersion.Minor) && (nativeVersion.Build >= wrapperVersion.Build));
+            }
 			catch (DllNotFoundException)
 			{
 				return false;
@@ -511,13 +511,13 @@ namespace FreeImageAPI
 			uint red_mask, uint green_mask, uint blue_mask) where T : struct
 		{
 			if ((palette != null) && (bpp <= 8) && (palette.Length < (1 << bpp)))
-				return FIBITMAP.Zero;
-
-			if (!CheckColorType(type, color))
-				return FIBITMAP.Zero;
+				return FIBITMAP.Zero;			
 
 			if (color.HasValue)
 			{
+                if (!CheckColorType(type, color.Value))
+                    return FIBITMAP.Zero;
+
 				GCHandle handle = new GCHandle();
 				try
 				{
@@ -598,8 +598,12 @@ namespace FreeImageAPI
 				GetRedMask(dib), GetGreenMask(dib), GetBlueMask(dib), true);
 			// Unlock the bitmap
 			result.UnlockBits(data);
-			// Apply the bitmaps resolution
-			result.SetResolution(GetResolutionX(dib), GetResolutionY(dib));
+			// Apply the bitmap resolution
+            if((GetResolutionX(dib) > 0) && (GetResolutionY(dib) > 0)) 
+            {
+                // SetResolution will throw an exception when zero values are given on input 
+                result.SetResolution(GetResolutionX(dib), GetResolutionY(dib));
+            }
 			// Check whether the bitmap has a palette
 			if (GetPalette(dib) != IntPtr.Zero)
 			{
@@ -4402,13 +4406,13 @@ namespace FreeImageAPI
 			T? color, FREE_IMAGE_COLOR_OPTIONS options) where T : struct
 		{
 			if (dib.IsNull)
-				return FIBITMAP.Zero;
-
-			if (!CheckColorType(GetImageType(dib), color))
-				return FIBITMAP.Zero;
+				return FIBITMAP.Zero;			
 
 			if (color.HasValue)
 			{
+                if (!CheckColorType(GetImageType(dib), color.Value))
+                    return FIBITMAP.Zero;
+
 				GCHandle handle = new GCHandle();
 				try
 				{

@@ -287,8 +287,8 @@ void CLASS dcb_color_full()
 				chroma[indx][c]=(f[0]*g[0]+f[1]*g[1]+f[2]*g[2]+f[3]*g[3])/(f[0]+f[1]+f[2]+f[3]);
 			}
 
-	for(row=3; row<height-3; row++)
-		for(col=3,indx=row*width+col; col<width-3; col++,indx++){
+	for(row=6; row<height-6; row++)
+		for(col=6,indx=row*width+col; col<width-6; col++,indx++){
 			image[indx][0]=CLIP(chroma[indx][0]+image[indx][1]);
 			image[indx][2]=CLIP(chroma[indx][1]+image[indx][1]);
 			
@@ -514,28 +514,35 @@ void CLASS fbdd_correction()
 // corrects chroma noise
 void CLASS fbdd_correction2(double (*image2)[3])
 {
-	int indx, u=width, v=2*width; 
-double Co, Ho, ratio;
-	for (indx=2+v; indx < height*width-(2+v); indx++) {
+    int indx, u=width, v=2*width; 
+    int col, row;
+    double Co, Ho, ratio;
 
-   if ( image2[indx][1]*image2[indx][2] != 0 ) {
-	   		
-            Co = (image2[indx+v][1] + image2[indx-v][1] + image2[indx-2][1] + image2[indx+2][1] - 
-						MAX(image2[indx-2][1], MAX(image2[indx+2][1], MAX(image2[indx-v][1], image2[indx+v][1]))) -
-						MIN(image2[indx-2][1], MIN(image2[indx+2][1], MIN(image2[indx-v][1], image2[indx+v][1]))))/2.0;
-            Ho = (image2[indx+v][2] + image2[indx-v][2] + image2[indx-2][2] + image2[indx+2][2] - 
-						MAX(image2[indx-2][2], MAX(image2[indx+2][2], MAX(image2[indx-v][2], image2[indx+v][2]))) -
-						MIN(image2[indx-2][2], MIN(image2[indx+2][2], MIN(image2[indx-v][2], image2[indx+v][2]))))/2.0;
-            ratio = sqrt ((Co*Co+Ho*Ho) / (image2[indx][1]*image2[indx][1] + image2[indx][2]*image2[indx][2]));
+    for (row=6; row < height-6; row++)
+    {
+       for (col=6; col < width-6; col++)
+       {
+          indx = row*width+col;
+
+          if ( image2[indx][1]*image2[indx][2] != 0 ) 
+          {
+             Co = (image2[indx+v][1] + image2[indx-v][1] + image2[indx-2][1] + image2[indx+2][1] - 
+                   MAX(image2[indx-2][1], MAX(image2[indx+2][1], MAX(image2[indx-v][1], image2[indx+v][1]))) -
+                   MIN(image2[indx-2][1], MIN(image2[indx+2][1], MIN(image2[indx-v][1], image2[indx+v][1]))))/2.0;
+             Ho = (image2[indx+v][2] + image2[indx-v][2] + image2[indx-2][2] + image2[indx+2][2] - 
+                   MAX(image2[indx-2][2], MAX(image2[indx+2][2], MAX(image2[indx-v][2], image2[indx+v][2]))) -
+                   MIN(image2[indx-2][2], MIN(image2[indx+2][2], MIN(image2[indx-v][2], image2[indx+v][2]))))/2.0;
+             ratio = sqrt ((Co*Co+Ho*Ho) / (image2[indx][1]*image2[indx][1] + image2[indx][2]*image2[indx][2]));
             
-if (ratio < 0.85){
-		   image2[indx][0] = -(image2[indx][1] + image2[indx][2] - Co - Ho) + image2[indx][0];
-           image2[indx][1] = Co;
-           image2[indx][2] = Ho;
-			     }
-  
-	}
-	}
+             if (ratio < 0.85)
+             {
+                 image2[indx][0] = -(image2[indx][1] + image2[indx][2] - Co - Ho) + image2[indx][0];
+                 image2[indx][1] = Co;
+                 image2[indx][2] = Ho;
+	     }
+          }
+       }
+    }
 }
 
 
@@ -576,6 +583,9 @@ g[3]=CLIP((23*image[indx+u][1]+23*image[indx+w][1]+2*image[indx+y][1]+8*(image[i
 void CLASS fbdd(int noiserd)
 { 
 	double (*image2)[3];
+        // safety net: disable for 4-color bayer or full-color images
+        if(colors!=3 || !filters)
+            return;
 	image2 = (double (*)[3]) calloc(width*height, sizeof *image2);
 
 	border_interpolate(4);

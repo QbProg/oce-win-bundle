@@ -633,6 +633,13 @@ public:
 	BOOL convertTo32Bits();
 
 	/** 
+	Converts the bitmap to a 32-bit float image. 
+	@return Returns TRUE if successfull, FALSE otherwise. 
+	@see FreeImage_ConvertToFloat
+	*/
+	BOOL convertToFloat();
+
+	/** 
 	Converts the bitmap to a 96-bit RGBF image. 
 	@return Returns TRUE if successfull, FALSE otherwise. 
 	@see FreeImage_ConvertToRGBF
@@ -645,6 +652,13 @@ public:
 	@see FreeImage_ConvertToUINT16
 	*/
 	BOOL convertToUINT16();
+
+	/** 
+	Converts the bitmap to a 48-bit RGB16 image. 
+	@return Returns TRUE if successfull, FALSE otherwise. 
+	@see FreeImage_ConvertToRGB16
+	*/
+	BOOL convertToRGB16();
 
 	/**
 	Converts a High Dynamic Range image (48-bit RGB or 96-bit RGB Float) to a 24-bit RGB image. 

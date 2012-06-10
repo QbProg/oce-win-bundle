@@ -159,6 +159,7 @@
 				StringPooling="true"
 				RuntimeLibrary="0"
 				BufferSecurityCheck="false"
+				OpenMP="true"
 				PrecompiledHeaderFile=".\Release/FreeImage.pch"
 				AssemblerListingLocation=".\Release/"
 				ObjectFile=".\Release/"
@@ -348,13 +349,14 @@
 				StringPooling="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
+				OpenMP="true"
 				PrecompiledHeaderFile=".\Debug/FreeImage.pch"
 				AssemblerListingLocation=".\Debug/"
 				ObjectFile=".\Debug/"
 				ProgramDataBaseFileName=".\Debug/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
-				Detect64BitPortabilityProblems="false"
+				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="3"
 				CompileAs="0"
 			/>
@@ -452,7 +454,11 @@
 				Name="Plugins"
 				>
 				<File
-					RelativePath=".\Source\FreeImage\J2KHelper.cpp"
+					RelativePath="Source\FreeImage\J2KHelper.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\Source\FreeImage\MNGHelper.cpp"
 					>
 				</File>
 				<File
@@ -472,7 +478,7 @@
 					>
 				</File>
 				<File
-					RelativePath=".\Source\FreeImage\PluginEXR.cpp"
+					RelativePath="Source\FreeImage\PluginEXR.cpp"
 					>
 				</File>
 				<File
@@ -496,11 +502,15 @@
 					>
 				</File>
 				<File
-					RelativePath=".\Source\FreeImage\PluginJ2K.cpp"
+					RelativePath="Source\FreeImage\PluginJ2K.cpp"
 					>
 				</File>
 				<File
-					RelativePath=".\Source\FreeImage\PluginJP2.cpp"
+					RelativePath=".\Source\FreeImage\PluginJNG.cpp"
+					>
+				</File>
+				<File
+					RelativePath="Source\FreeImage\PluginJP2.cpp"
 					>
 				</File>
 				<File
@@ -524,11 +534,11 @@
 					>
 				</File>
 				<File
-					RelativePath=".\Source\FreeImage\PluginPFM.cpp"
+					RelativePath="Source\FreeImage\PluginPFM.cpp"
 					>
 				</File>
 				<File
-					RelativePath=".\Source\FreeImage\PluginPICT.cpp"
+					RelativePath="Source\FreeImage\PluginPICT.cpp"
 					>
 				</File>
 				<File
@@ -548,7 +558,7 @@
 					>
 				</File>
 				<File
-					RelativePath=".\Source\FreeImage\PluginRAW.cpp"
+					RelativePath="Source\FreeImage\PluginRAW.cpp"
 					>
 				</File>
 				<File
@@ -576,11 +586,11 @@
 					>
 				</File>
 				<File
-					RelativePath=".\Source\FreeImage\PSDParser.cpp"
+					RelativePath="Source\FreeImage\PSDParser.cpp"
 					>
 				</File>
 				<File
-					RelativePath=".\Source\FreeImage\TIFFLogLuv.cpp"
+					RelativePath="Source\FreeImage\TIFFLogLuv.cpp"
 					>
 				</File>
 			</Filter>
@@ -616,7 +626,11 @@
 					>
 				</File>
 				<File
-					RelativePath=".\Source\FreeImage\ConversionFloat.cpp"
+					RelativePath="Source\FreeImage\ConversionFloat.cpp"
+					>
+				</File>
+				<File
+					RelativePath="Source\FreeImage\ConversionRGB16.cpp"
 					>
 				</File>
 				<File
@@ -628,7 +642,7 @@
 					>
 				</File>
 				<File
-					RelativePath=".\Source\FreeImage\ConversionUINT16.cpp"
+					RelativePath="Source\FreeImage\ConversionUINT16.cpp"
 					>
 				</File>
 				<File
@@ -644,7 +658,7 @@
 					>
 				</File>
 				<File
-					RelativePath=".\Source\FreeImage\tmoFattal02.cpp"
+					RelativePath="Source\FreeImage\tmoFattal02.cpp"
 					>
 				</File>
 				<File
@@ -672,7 +686,7 @@
 				Name="DeprecationMgr"
 				>
 				<File
-					RelativePath=".\Source\DeprecationManager\Deprecated.cpp"
+					RelativePath="Source\DeprecationManager\Deprecated.cpp"
 					>
 				</File>
 				<File
@@ -762,7 +776,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Source\FreeImage\PSDParser.h"
+				RelativePath="Source\FreeImage\PSDParser.h"
 				>
 			</File>
 			<File
@@ -782,7 +796,7 @@
 			Name="Toolkit Files"
 			>
 			<File
-				RelativePath=".\Source\FreeImageToolkit\Background.cpp"
+				RelativePath="Source\FreeImageToolkit\Background.cpp"
 				>
 			</File>
 			<File
@@ -818,7 +832,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Source\FreeImageToolkit\MultigridPoissonSolver.cpp"
+				RelativePath="Source\FreeImageToolkit\MultigridPoissonSolver.cpp"
 				>
 			</File>
 			<File

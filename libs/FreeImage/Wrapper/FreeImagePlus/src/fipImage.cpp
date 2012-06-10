@@ -617,6 +617,14 @@ BOOL fipImage::dither(FREE_IMAGE_DITHER algorithm) {
 	return FALSE;
 }
 
+BOOL fipImage::convertToFloat() {
+	if(_dib) {
+		FIBITMAP *dib = FreeImage_ConvertToFloat(_dib);
+		return replace(dib);
+	}
+	return FALSE;
+}
+
 BOOL fipImage::convertToRGBF() {
 	if(_dib) {
 		FIBITMAP *dib = FreeImage_ConvertToRGBF(_dib);
@@ -628,6 +636,14 @@ BOOL fipImage::convertToRGBF() {
 BOOL fipImage::convertToUINT16() {
 	if(_dib) {
 		FIBITMAP *dib = FreeImage_ConvertToUINT16(_dib);
+		return replace(dib);
+	}
+	return FALSE;
+}
+
+BOOL fipImage::convertToRGB16() {
+	if(_dib) {
+		FIBITMAP *dib = FreeImage_ConvertToRGB16(_dib);
 		return replace(dib);
 	}
 	return FALSE;

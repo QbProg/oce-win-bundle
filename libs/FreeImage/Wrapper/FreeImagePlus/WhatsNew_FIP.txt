@@ -5,6 +5,12 @@ What's New for FreeImagePlus
 ! : changed
 + : added
 
+July 17th, 2011
++ [Herve Drolon] added fipImage::convertToRGB16
+
+February 26th, 2011
++ [Herve Drolon] added fipImage::convertToFloat
+
 November 14th, 2010
 + [Herve Drolon] added getThumbnail, setThumbnail, hasThumbnail, clearThumbnail to fipImage
 
