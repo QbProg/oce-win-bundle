@@ -1,5 +1,5 @@
 #  GL2PS, an OpenGL to PostScript Printing Library
-#  Copyright (C) 1999-2011 C. Geuzaine
+#  Copyright (C) 1999-2012 C. Geuzaine
 # 
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of either:
@@ -49,7 +49,7 @@ option(ENABLE_PNG "Enable PNG support" ON)
 
 set(GL2PS_MAJOR_VERSION 1)
 set(GL2PS_MINOR_VERSION 3)
-set(GL2PS_PATCH_VERSION 6)
+set(GL2PS_PATCH_VERSION 7)
 set(GL2PS_EXTRA_VERSION "" CACHE STRING "GL2PS extra version string")
 
 set(GL2PS_VERSION "${GL2PS_MAJOR_VERSION}.${GL2PS_MINOR_VERSION}")
@@ -116,7 +116,7 @@ if(OPENGL_FOUND)
     set_target_properties(shared PROPERTIES COMPILE_FLAGS "-DGL2PSDLL -DGL2PSDLL_EXPORTS")
   endif(MSVC)
 
-  install(TARGETS lib shared DESTINATION lib)
+  install(TARGETS lib shared DESTINATION lib${LIB_SUFFIX})
 endif(OPENGL_FOUND)
 
 if(WIN32)

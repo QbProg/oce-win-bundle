@@ -1,6 +1,6 @@
 %
 %  GL2PS, an OpenGL to PostScript Printing Library
-%  Copyright (C) 1999-2011 C. Geuzaine
+%  Copyright (C) 1999-2012 C. Geuzaine
 %
 %  This program is free software; you can redistribute it and/or
 %  modify it under the terms of either:
@@ -20,8 +20,8 @@
 %
 %  You should have received a copy of the GNU Library General Public
 %  License along with this library in the file named "COPYING.LGPL";
-%  if not, write to the Free Software Foundation, Inc., 675 Mass Ave,
-%  Cambridge, MA 02139, USA.
+%  if not, write to the Free Software Foundation, Inc., 51 Franklin
+%  Street, Fifth Floor, Boston, MA 02110-1301, USA.
 %
 %  You should have received a copy of the GL2PS License with this
 %  library in the file named "COPYING.GL2PS"; if not, I will be glad
@@ -32,7 +32,7 @@
 %
 %  Please report all bugs and problems to <gl2ps@geuz.org>.
 
-%%tth: \begin{html}<link href="/general.css" rel="stylesheet" type="text/css"><title>GL2PS: an OpenGL to PostScript printing library</title>\end{html}
+%%tth: \begin{html}<link href="http://geuz.org/geuz.css" rel="stylesheet" type="text/css"> <style type="text/css"> h3 { border-bottom: 0; }</style><title>GL2PS: an OpenGL to PostScript printing library</title>\end{html}
 
 \documentclass[10pt]{article}
 
@@ -62,24 +62,28 @@
 
 \title{GL2PS: an OpenGL to PostScript printing library}
 \author{Christophe Geuzaine}
-\date{Version 1.3.6, August 14 2011}
+\date{Version 1.3.7, September 2 2012}
 
 \maketitle
 
 \special{html:<center>
-<table width="50%" cellspacing="2" cellpadding="2" border="0">
-<tr>
-<td><a href="http://geuz.org/gl2ps/outBspCulledCompressed.ps.gz"><img
+<table width="50%" style="border:0;padding:4px;">
+<tr style="border:0;padding:4px;">
+<td style="border:0;padding:4px;"><a 
+     href="http://geuz.org/gl2ps/outBspCulledCompressed.ps.gz"><img
      src="http://geuz.org/gl2ps/outThumbnail.png" alt="PS"></a></td>
-<td><a href="http://geuz.org/gl2ps/outBspCulledCompressed.eps.gz"><img
+<td style="border:0;padding:4px;"><a 
+     href="http://geuz.org/gl2ps/outBspCulledCompressed.eps.gz"><img
      src="http://geuz.org/gl2ps/outThumbnail.png" alt="EPS"></a></td>
-<td><a href="http://geuz.org/gl2ps/outBspCulledCompressed.pdf"><img
+<td style="border:0;padding:4px;"><a
+     href="http://geuz.org/gl2ps/outBspCulledCompressed.pdf"><img
      src="http://geuz.org/gl2ps/outThumbnail.png" alt="PDF"></a></td>
-<td><a href="http://geuz.org/gl2ps/outBspCulledCompressed.svgz"><img
+<td style="border:0;padding:4px;"><a 
+     href="http://geuz.org/gl2ps/outBspCulledCompressed.svgz"><img
      src="http://geuz.org/gl2ps/outThumbnail.png" alt="SVG"></a></td>
 </tr>
-<tr>
-<td colspan="4"><small><em>Example: compressed
+<tr style="border:0;padding:4px;">
+<td colspan="4" style="border:0;padding:4px;"><small><em>Example: compressed
 <a href="http://geuz.org/gl2ps/outBspCulledCompressed.ps.gz">PS</a>,
 <a href="http://geuz.org/gl2ps/outBspCulledCompressed.eps.gz">EPS</a>,
 <a href="http://geuz.org/gl2ps/outBspCulledCompressed.pdf">PDF</a> and
@@ -95,7 +99,7 @@ the OpenGL window.</em></small></td>
 </center>
 <h2>Download</h2>
 The latest stable version of GL2PS is <a
-href="http://geuz.org/gl2ps/src/gl2ps-1.3.6.tgz">gl2ps-1.3.6.tgz</a>.  Older
+href="http://geuz.org/gl2ps/src/gl2ps-1.3.7.tgz">gl2ps-1.3.7.tgz</a>.  Older
 versions and nightly source snapshots are available <a
 href="http://geuz.org/gl2ps/src/">here</a>.  For read-only svn access use:
 '<code>svn co https://geuz.org/svn/gl2ps/trunk gl2ps</code>' (username:
@@ -109,6 +113,17 @@ password: gl2ps). You can also subscribe to the <a
 href="http://geuz.org/mailman/listinfo/gl2ps-announce/">gl2ps-announce</a>
 mailing list to be notified automatically when a new version of GL2PS is
 released.
+<p>
+  <form action="https://www.paypal.com/cgi-bin/webscr" method="post">
+  <input type="hidden" name="cmd" value="_xclick">
+  <input type="hidden" name="business" value="paypal@geuz.org">
+  <input type="hidden" name="item_name" value="GL2PS donation">
+  <input type="hidden" name="no_note" value="1">
+  <input type="hidden" name="currency_code" value="USD">
+  <input type="hidden" name="tax" value="0">
+  <input type="image" src="/images/donation.gif" name="submit"
+         alt="Make a donation with PayPal">
+  </form>
 <h2>Documentation</h2>}
 
 \tableofcontents
@@ -1025,19 +1040,13 @@ anymore.
 \item[1.3.6] (Aug 14, 2011) Added support for PixelZoom (set using
   glPixelZoom) in postscript images; fixed text rotation in TeX; added
   support for text alignment in SVG; fixed other minor bugs.
+\item[1.3.7] (Sep 2, 2012) Minor documentation and build system fixes.
 \end{description}
 
-\special{html:<p>
-  <form action="https://www.paypal.com/cgi-bin/webscr" method="post">
-  <input type="hidden" name="cmd" value="_xclick">
-  <input type="hidden" name="business" value="geuzaine@acm.caltech.edu">
-  <input type="hidden" name="item_name" value="GL2PS donation">
-  <input type="hidden" name="no_note" value="1">
-  <input type="hidden" name="currency_code" value="USD">
-  <input type="hidden" name="tax" value="0">
-  <input type="image" src="/images/donation.gif" name="submit"
-         alt="Make a donation with PayPal">
-  </form>
-  <p>Back to <a href="/">geuz.org</a>}
+\special{html:
+<h2>Documentation translations</h2>
+<p>
+<a href="http://www.webhostinghub.com/support/by/edu/gl2ps-an-uk">Ukrainian translation</a><br>
+<p>Back to <a href="/">geuz.org</a>}
 
 \end{document}
