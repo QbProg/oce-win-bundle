@@ -22,8 +22,11 @@ SET ( FT_SOURCE_FILES
     ${FT_DIR}/src/base/ftstroke.c
     ${FT_DIR}/src/base/ftsystem.c
     ${FT_DIR}/src/smooth/smooth.c
-	freetype.def
     )
+    
+IF(MSVC)
+     LIST (APPEND FT_SOURCE_FILES freetype.def)
+ENDIF()
     
 SET ( FT_MODULES 
     ${FT_DIR}/src/base/ftbbox.c
