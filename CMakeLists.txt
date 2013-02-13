@@ -2,12 +2,12 @@ cmake_minimum_required(VERSION 2.6)
 
 PROJECT(oce-win-bundle)
 SET(CMAKE_DEBUG_POSTFIX "d")
-SET(FT_DIR ${CMAKE_SOURCE_DIR}/libs/freetype)
-SET(FTGL_DIR ${CMAKE_SOURCE_DIR}/libs/ftgl)
-SET(GL2PS_DIR ${CMAKE_SOURCE_DIR}/libs/gl2ps)
-SET(FREEIMAGE_DIR ${CMAKE_SOURCE_DIR}/libs/FreeImage)
-SET(LIBPNG_DIR ${CMAKE_SOURCE_DIR}/libs/FreeImage/Source/LibPNG/)
-SET(ZLIB_DIR ${CMAKE_SOURCE_DIR}/libs/FreeImage/Source/zlib/)
+SET(FT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs/freetype)
+SET(FTGL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs/ftgl)
+SET(GL2PS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs/gl2ps)
+SET(FREEIMAGE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs/FreeImage)
+SET(LIBPNG_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs/FreeImage/Source/LibPNG/)
+SET(ZLIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs/FreeImage/Source/zlib/)
 
 IF (${CMAKE_SIZEOF_VOID_P} MATCHES "8") # It is 64bit, otherwise 32 bit systems match 4
 	ADD_DEFINITIONS(-D_OCC64)
