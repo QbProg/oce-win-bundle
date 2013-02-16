@@ -1,3 +1,7 @@
+
+- Installation directory for debug configuration uses bin and lib instead of 
+  bind and libd , to match the OCE behavoir
+  
 Thanks to poelmanc:
  - Updates to let oce-win-bundle work as subdirectory in 
    a project cmake tree (see oce related changes)
