@@ -1,3 +1,8 @@
+Thanks to poelmanc:
+ - Updates to let oce-win-bundle work as subdirectory in 
+   a project cmake tree (see oce related changes)
+ - Compiler fixes
+
 0.11.0
 
 Restored support for all release configuration types (thanks to heyuqi)
