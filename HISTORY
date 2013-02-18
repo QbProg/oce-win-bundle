@@ -1,4 +1,6 @@
 
+- Split FreeImagePlus from FreeImage, now two libraries are generated (and used)
+
 - Installation directory for debug configuration uses bin and lib instead of 
   bind and libd , to match the OCE behavoir
   
