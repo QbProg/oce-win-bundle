@@ -17,7 +17,9 @@ LIST(REMOVE_ITEM zlib_files "${ZLIB_DIR}/example.c")
 LIST(REMOVE_ITEM zlib_files "${ZLIB_DIR}/minigzip.c")
 LIST(REMOVE_ITEM zlib_files "${LIBPNG_DIR}/pngtest.c")
 
-LINK_LIBRARIES("opengl32")
+IF(WIN32)
+    LINK_LIBRARIES("opengl32")
+ENDIF()
 ADD_LIBRARY (gl2ps SHARED ${GL2PS_DIR}/gl2ps.c ${png_files} ${zlib_files})
 
 INSTALL(FILES ${GL2PS_DIR}/gl2ps.h DESTINATION ${OCE_WIN_BUNDLE_INSTALL_DIR}/include/gl2ps)
