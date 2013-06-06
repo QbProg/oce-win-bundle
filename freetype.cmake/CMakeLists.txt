@@ -54,7 +54,7 @@ SET ( FT_MODULES
     ${FT_DIR}/src/winfonts/winfnt.c
     )
 
-ADD_LIBRARY(freetype SHARED ${FT_SOURCE_FILES} ${FT_MODULES} )  
+ADD_LIBRARY(freetype ${FT_SOURCE_FILES} ${FT_MODULES} )
 
 FILE(GLOB freetype_headers "${FT_DIR}/include/*.*")
 FILE(GLOB freetype_headers_ft "${FT_DIR}/include/freetype/*.*")

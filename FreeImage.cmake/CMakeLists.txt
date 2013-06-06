@@ -73,7 +73,7 @@ LIST(REMOVE_ITEM openexr_files "${FREEIMAGE_DIR}/Source/OpenEXR/Half/eLut.cpp")
 LIST(REMOVE_ITEM openexr_files "${FREEIMAGE_DIR}/Source/OpenEXR/Half/toFloat.cpp")
 LIST(REMOVE_ITEM openexr_files "${FREEIMAGE_DIR}/Source/OpenEXR/IlmImf/b44ExpLogTable.cpp")
 
-ADD_LIBRARY (FreeImage SHARED ${png_files} ${zlib_files} ${deprecation_files} 
+ADD_LIBRARY (FreeImage ${png_files} ${zlib_files} ${deprecation_files}
 			${freeimage_files} ${freeimage_c_files} ${freeimagetoolkit_files} ${freeimagelib_files} ${libjpeg_files}
 			${libmng_files} ${libopenjpeg_files} ${libraw_files}
 			${libtiff_files} ${metadata_files} ${openexr_files}
@@ -93,7 +93,7 @@ INSTALL(TARGETS FreeImage
 FILE(GLOB freeimagelib_files ${FREEIMAGE_DIR}/Source/FreeImageLib/*.cpp)
 LIST(REMOVE_ITEM freeimage_plus_files "${FREEIMAGE_DIR}/Wrapper/FreeImagePlus/src/FreeImagePlus.cpp")
 
-ADD_LIBRARY (FreeImagePlus SHARED ${freeimage_plus_files})
+ADD_LIBRARY (FreeImagePlus ${freeimage_plus_files})
 TARGET_LINK_LIBRARIES(FreeImagePlus FreeImage)
 
 INSTALL(TARGETS FreeImagePlus
