@@ -11,7 +11,8 @@ set_property(DIRECTORY PROPERTY EP_BASE ${ep_base})
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 option(BUILD_TESTING "Enable testing during builds" OFF)
 
-set(ep_install_dir "${ep_base}/Install")
+set(ep_install_dir ${ep_base}/Install)
+set(ep_build_dir ${ep_base}/Build)
 set(ep_build_shared_libs ${BUILD_SHARED_LIBS})
 set(ep_build_testing ${BUILD_TESTING})
 
