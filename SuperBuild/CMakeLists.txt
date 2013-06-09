@@ -43,10 +43,11 @@ endif()
 
 set(ep_common_args
   -DBUILD_SHARED_LIBS:BOOL=${ep_build_shared_libs}
-  -DCMAKE_INSTALL_PREFIX:PATH=${ep_install_dir}
   -DBUILD_TESTING:BOOL=${ep_build_testing}
   -DBUILD_EXAMPLES:BOOL=OFF
   -DCMAKE_BUILD_TYPE:BOOL=${build_type}
+  -DCMAKE_DEBUG_POSTFIX:STRING=d
+  -DCMAKE_INSTALL_PREFIX:PATH=${ep_install_dir}
   -DOCE_WIN_BUNDLE_INSTALL_DIR:PATH=${ep_install_dir}
   -DOCE_WIN_BUNDLE_INSTALL_DIR_BITS:PATH=${ep_install_dir_bits}
 )
@@ -73,22 +74,23 @@ IF(NOT DEFINED FREETYPE_DIR)
         -DFT_DIR:STRING=${ep_base}/Source/${proj}
     )
 
-    add_custom_command(
-      OUTPUT ${ep_base}/Source/${proj}/CMakeLists.txt
+    ExternalProject_Add_Step(${proj} copy_CMakeLists
+      COMMENT "Copying CMakeLists.txt file..."
       COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/../${proj}.cmake/CMakeLists.txt ${ep_base}/Source/${proj}/CMakeLists.txt
       DEPENDS ${CMAKE_SOURCE_DIR}/../${proj}.cmake/CMakeLists.txt
-      )
-    add_custom_command(
-      OUTPUT ${ep_base}/Source/${proj}/freetype.def
-      COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/../${proj}.cmake/freetype.def ${ep_base}/Source/${proj}/freetype.def
-      DEPENDS ${CMAKE_SOURCE_DIR}/../${proj}.cmake/freetype.def
-      )
-    ExternalProject_Add_Step(${proj} update_build_system
-      COMMENT "Updating build system"
-      DEPENDS ${ep_base}/Source/${proj}/CMakeLists.txt ${ep_base}/Source/${proj}/freetype.def
+      DEPENDEES download
       DEPENDERS configure
       ALWAYS OFF
-      )
+    )
+
+    ExternalProject_Add_Step(${proj} copy_Def
+      COMMENT "Copying freetype.def file..."
+      COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/../${proj}.cmake/freetype.def ${ep_base}/Source/${proj}/freetype.def
+      DEPENDS ${CMAKE_SOURCE_DIR}/../${proj}.cmake/freetype.def
+      DEPENDEES download
+      DEPENDERS configure
+      ALWAYS OFF
+    )
 
     set(FREETYPE_DIR "${ep_build_dir}/${proj}")
 
@@ -106,19 +108,18 @@ IF(NOT DEFINED FREEIMAGE_DIR)
       CMAKE_ARGS
         ${ep_common_args}
         -DFREEIMAGE_DIR:STRING=${ep_base}/Source/${proj}
+        -DLIBPNG_DIR:STRING=${ep_base}/Source/${proj}/Source/LibPNG
+        -DZLIB_DIR:STRING=${ep_base}/Source/${proj}/Source/ZLib
     )
 
-    add_custom_command(
-      OUTPUT ${ep_base}/Source/${proj}/CMakeLists.txt
+    ExternalProject_Add_Step(${proj} copy_CMakeLists
+      COMMENT "Copying CMakeLists.txt file..."
       COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/../${proj}.cmake/CMakeLists.txt ${ep_base}/Source/${proj}/CMakeLists.txt
       DEPENDS ${CMAKE_SOURCE_DIR}/../${proj}.cmake/CMakeLists.txt
-      )
-    ExternalProject_Add_Step(${proj} update_build_system
-      COMMENT "Updating build system"
-      DEPENDS ${ep_base}/Source/${proj}/CMakeLists.txt
+      DEPENDEES download
       DEPENDERS configure
       ALWAYS OFF
-      )
+    )
 
     set(FREEIMAGE_DIR "${ep_build_dir}/${proj}")
 
@@ -132,8 +133,6 @@ IF(NOT DEFINED GL2PS_DIR)
     ExternalProject_Add(${proj}
       URL http://geuz.org/gl2ps/src/gl2ps-1.3.8.tgz
       URL_MD5 05ae306fdad00a24ffcabf47d8ae363e
-      PATCH_COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/../${proj}.cmake/CMakeLists.txt ${ep_base}/Source/${proj}/CMakeLists.txt
-      UPDATE_COMMAND ""
       CMAKE_GENERATOR ${gen}
       CMAKE_ARGS
         ${ep_common_args}
@@ -141,6 +140,15 @@ IF(NOT DEFINED GL2PS_DIR)
         -DFREEIMAGE_DIR:STRING=${ep_base}/Source/${proj}
         -DLIBPNG_DIR:STRING=${ep_base}/Source/FreeImage/Source/LibPNG
         -DZLIB_DIR:STRING=${ep_base}/Source/FreeImage/Source/ZLib
+    )
+
+    ExternalProject_Add_Step(${proj} copy_CMakeLists
+      COMMENT "Copying CMakeLists.txt file..."
+      COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/../${proj}.cmake/CMakeLists.txt ${ep_base}/Source/${proj}/CMakeLists.txt
+      DEPENDS ${CMAKE_SOURCE_DIR}/../${proj}.cmake/CMakeLists.txt
+      DEPENDEES download
+      DEPENDERS configure
+      ALWAYS OFF
     )
 
     set(GL2PS_DIR "${ep_build_dir}/${proj}")
