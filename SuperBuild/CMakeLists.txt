@@ -8,12 +8,28 @@ include(ExternalProject)
 set(ep_base "${CMAKE_BINARY_DIR}/ExternalProjects")
 set_property(DIRECTORY PROPERTY EP_BASE ${ep_base})
 
-option(BUILD_SHARED_LIBS "Build shared libraries" ON)
-option(BUILD_TESTING "Enable testing during builds" OFF)
+# Define helper macro OPTION_WITH_DEFAULT
+macro( option_with_default OPTION_NAME OPTION_STRING OPTION_DEFAULT )
+    if( NOT DEFINED ${OPTION_NAME} )
+        set( ${OPTION_NAME} ${OPTION_DEFAULT} )
+    endif( NOT DEFINED ${OPTION_NAME} )
+    option( ${OPTION_NAME} "${OPTION_STRING}" ${${OPTION_NAME}} )
+endmacro( option_with_default OPTION_NAME OPTION_STRING OPTION_DEFAULT )
+
+# Options
+option_with_default(BUILD_TESTING "Enable testing during builds" OFF)
+option_with_default(OCE_BUILD_SHARED_LIB  "Build shared libraries" ON)
+option_with_default(OCE_DATAEXCHANGE "Build data exchange" ON)
+option_with_default(OCE_DRAW "Build test harness (DRAW)" OFF)
+option_with_default(OCE_MODEL "Build model components" ON)
+option_with_default(OCE_OCAF "Build application framework" ON)
+option_with_default(OCE_VISUALISATION "Build visualisation component" ON)
+option_with_default(OCE_WITH_FREEIMAGE "Builds FreeImage library" ON)
+option_with_default(OCE_WITH_GL2PS "Builds gl2ps library" ON)
 
 set(ep_install_dir ${ep_base}/Install)
 set(ep_build_dir ${ep_base}/Build)
-set(ep_build_shared_libs ${BUILD_SHARED_LIBS})
+set(ep_build_shared_libs ${OCE_BUILD_SHARED_LIB})
 set(ep_build_testing ${BUILD_TESTING})
 
 if (${CMAKE_SIZEOF_VOID_P} MATCHES "8") # It is 64bit, otherwise 32 bit systems match 4
@@ -60,6 +76,8 @@ else()
   set(gen "${CMAKE_GENERATOR}")
 endif()
 
+set(OCE_DEPENDS)
+
 ############################################################################
 # FreeType
 #
@@ -93,13 +111,19 @@ IF(NOT DEFINED FREETYPE_DIR)
     )
 
     set(FREETYPE_DIR "${ep_build_dir}/${proj}")
+    set(OCE_DEPENDS ${OCE_DEPENDS};${proj})
+
+    set(FREETYPE_INCLUDE_DIRS ${ep_install_dir}/include/freetype;${ep_install_dir}/include/freetype/freetype)
+    find_library(FREETYPE_LIBRARY NAMES freetype PATHS ${ep_install_dir}/lib NO_DEFAULT_PATH)
+    find_library(FREETYPE_LIBRARY_DEBUG NAMES freetyped PATHS ${ep_install_dir}/lib NO_DEFAULT_PATH)
+    mark_as_advanced(FREETYPE_LIBRARY FREETYPE_LIBRARY_DEBUG)
 
 ENDIF()
 
 ############################################################################
 # FreeImage
 #
-IF(NOT DEFINED FREEIMAGE_DIR)
+IF(OCE_WITH_FREEIMAGE AND NOT DEFINED FREEIMAGE_DIR)
     set(proj FreeImage)
     ExternalProject_Add(${proj}
       URL http://sourceforge.net/projects/freeimage/files/Source%20Distribution/3.15.4/FreeImage3154.zip/download
@@ -122,13 +146,21 @@ IF(NOT DEFINED FREEIMAGE_DIR)
     )
 
     set(FREEIMAGE_DIR "${ep_build_dir}/${proj}")
+    set(OCE_DEPENDS ${OCE_DEPENDS};${proj})
+
+    set(FREEIMAGE_INCLUDE_DIR ${ep_install_dir}/include/FreeImage)
+    find_library(FREEIMAGE_LIBRARY NAMES FreeImage PATHS ${ep_install_dir}/lib NO_DEFAULT_PATH)
+    find_library(FREEIMAGE_LIBRARY_DEBUG NAMES FreeImaged PATHS ${ep_install_dir}/lib NO_DEFAULT_PATH)
+    find_library(FREEIMAGEPLUS_LIBRARY NAMES FreeImagePlus PATHS ${ep_install_dir}/lib NO_DEFAULT_PATH)
+    find_library(FREEIMAGEPLUS_LIBRARY_DEBUG NAMES FreeImagePlusd PATHS ${ep_install_dir}/lib NO_DEFAULT_PATH)
+    mark_as_advanced(FREEIMAGE_LIBRARY FREEIMAGE_LIBRARY_DEBUG FREEIMAGEPLUS_LIBRARY FREEIMAGEPLUS_LIBRARY_DEBUG)
 
 ENDIF()
 
 ############################################################################
 # gl2ps
 #
-IF(NOT DEFINED GL2PS_DIR)
+IF(OCE_WITH_GL2PS AND NOT DEFINED GL2PS_DIR)
     set(proj gl2ps)
     ExternalProject_Add(${proj}
       URL http://geuz.org/gl2ps/src/gl2ps-1.3.8.tgz
@@ -152,6 +184,12 @@ IF(NOT DEFINED GL2PS_DIR)
     )
 
     set(GL2PS_DIR "${ep_build_dir}/${proj}")
+    set(OCE_DEPENDS ${OCE_DEPENDS};${proj})
+
+    set(GL2PS_INCLUDE_DIR ${ep_install_dir}/include/gl2ps)
+    find_library(GL2PS_LIBRARY NAMES gl2ps PATHS ${ep_install_dir}/lib NO_DEFAULT_PATH)
+    find_library(GL2PS_LIBRARY_DEBUG NAMES gl2psd PATHS ${ep_install_dir}/lib NO_DEFAULT_PATH)
+    mark_as_advanced(GL2PS_LIBRARY GL2PS_LIBRARY_DEBUG)
 
 ENDIF()
 
@@ -159,26 +197,13 @@ ENDIF()
 # OCE
 #
 
-set(FREETYPE_INCLUDE_DIRS ${ep_install_dir}/include/freetype;${ep_install_dir}/include/freetype/freetype)
-find_library(FREETYPE_LIBRARY NAMES freetype PATHS ${ep_install_dir}/lib NO_DEFAULT_PATH)
-find_library(FREETYPE_LIBRARY_DEBUG NAMES freetyped PATHS ${ep_install_dir}/lib NO_DEFAULT_PATH)
-
-set(FREEIMAGE_INCLUDE_DIR ${ep_install_dir}/include/FreeImage)
-find_library(FREEIMAGE_LIBRARY NAMES FreeImage PATHS ${ep_install_dir}/lib NO_DEFAULT_PATH)
-find_library(FREEIMAGE_LIBRARY_DEBUG NAMES FreeImaged PATHS ${ep_install_dir}/lib NO_DEFAULT_PATH)
-find_library(FREEIMAGEPLUS_LIBRARY NAMES FreeImagePlus PATHS ${ep_install_dir}/lib NO_DEFAULT_PATH)
-find_library(FREEIMAGEPLUS_LIBRARY_DEBUG NAMES FreeImagePlusd PATHS ${ep_install_dir}/lib NO_DEFAULT_PATH)
-
-set(GL2PS_INCLUDE_DIR ${ep_install_dir}/include/gl2ps)
-find_library(GL2PS_LIBRARY NAMES gl2ps PATHS ${ep_install_dir}/lib NO_DEFAULT_PATH)
-find_library(GL2PS_LIBRARY_DEBUG NAMES gl2psd PATHS ${ep_install_dir}/lib NO_DEFAULT_PATH)
-
 ExternalProject_Add(oce
 #  DOWNLOAD_COMMAND ""
 #  SOURCE_DIR ${CMAKE_SOURCE_DIR}/../../oce
   URL https://github.com/tpaviot/oce/archive/36b1736d0a44bb6e7bb45d8ef42738e8f0d9f38c.tar.gz
   URL_MD5 42fc70cdb2a2f16324dd6d6202068ea1
   CMAKE_GENERATOR ${gen}
+  TEST_BEFORE_INSTALL ${ep_build_testing}
   CMAKE_ARGS
     ${ep_common_args}
     -DOCE_INSTALL_PREFIX:PATH=${ep_install_dir}
@@ -191,14 +216,17 @@ ExternalProject_Add(oce
     -DFREEIMAGE_LIBRARY_DEBUG:FILEPATH=${FREEIMAGE_LIBRARY_DEBUG}
     -DFREEIMAGEPLUS_LIBRARY:FILEPATH=${FREEIMAGEPLUS_LIBRARY}
     -DFREEIMAGEPLUS_LIBRARY_DEBUG:FILEPATH=${FREEIMAGEPLUS_LIBRARY_DEBUG}
-    -DFTGL_DIR:FILEPATH=${FTGL_DIR}
     -DGL2PS_INCLUDE_DIR:PATH=${GL2PS_INCLUDE_DIR}
     -DGL2PS_LIBRARY:FILEPATH=${GL2PS_LIBRARY}
     -DGL2PS_LIBRARY_DEBUG:FILEPATH=${GL2PS_LIBRARY_DEBUG}
-    -DOCE_DRAW:BOOL=OFF
-    -DOCE_MULTITHREAD_LIBRARY:STRING=NONE
-    -DOCE_WITH_FREEIMAGE:BOOL=ON
-    -DOCE_WITH_GL2PS:BOOL=ON
+    -DOCE_MODEL:BOOL=${OCE_MODEL}
+    -DOCE_DATAEXCHANGE:BOOL=${OCE_DATAEXCHANGE}
+    -DOCE_OCAF:BOOL=${OCE_OCAF}
+    -DOCE_VISUALIZATION:BOOL=${OCE_VISUALIZATION}
+    -DOCE_DRAW:BOOL=${OCE_DRAW}
+    -DOCE_WITH_FREEIMAGE:BOOL=${OCE_WITH_FREEIMAGE}
+    -DOCE_WITH_GL2PS:BOOL=${OCE_WITH_GL2PS}
+    -DOCE_TESTING:BOOL=${ep_build_testing}
   DEPENDS
-    freetype FreeImage gl2ps
+    ${OCE_DEPENDS}
 )
