@@ -76,11 +76,15 @@
 #  endif
 #endif
 
+#if defined(HAVE_NO_VSNPRINTF)
+#  define GL2PS_HAVE_NO_VSNPRINTF
+#endif
+
 /* Version number */
 
 #define GL2PS_MAJOR_VERSION 1
 #define GL2PS_MINOR_VERSION 3
-#define GL2PS_PATCH_VERSION 7
+#define GL2PS_PATCH_VERSION 8
 #define GL2PS_EXTRA_VERSION ""
 
 #define GL2PS_VERSION (GL2PS_MAJOR_VERSION + \
@@ -175,6 +179,9 @@ GL2PSDLL_API GLint gl2psText(const char *str, const char *fontname,
                              GLshort fontsize);
 GL2PSDLL_API GLint gl2psTextOpt(const char *str, const char *fontname,
                                 GLshort fontsize, GLint align, GLfloat angle);
+GL2PSDLL_API GLint gl2psTextOptColor(const char *str, const char *fontname,
+                                     GLshort fontsize, GLint align, GLfloat angle,
+                                     GL2PSrgba color);
 GL2PSDLL_API GLint gl2psSpecial(GLint format, const char *str);
 GL2PSDLL_API GLint gl2psDrawPixels(GLsizei width, GLsizei height,
                                    GLint xorig, GLint yorig,
@@ -191,6 +198,7 @@ GL2PSDLL_API GLint gl2psDrawImageMap(GLsizei width, GLsizei height,
                                      const unsigned char *imagemap);
 GL2PSDLL_API const char *gl2psGetFileExtension(GLint format);
 GL2PSDLL_API const char *gl2psGetFormatDescription(GLint format);
+GL2PSDLL_API GLint gl2psGetFileFormat();
 
 #if defined(__cplusplus)
 }
