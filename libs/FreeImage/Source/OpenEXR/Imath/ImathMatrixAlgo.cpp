@@ -43,6 +43,11 @@
 //----------------------------------------------------------------------------
 
 #include "ImathMatrixAlgo.h"
+
+#if defined(__MINGW64__)
+    #include <cmath>
+#endif
+
 #include <algorithm>
 
 #if defined(OPENEXR_DLL)
