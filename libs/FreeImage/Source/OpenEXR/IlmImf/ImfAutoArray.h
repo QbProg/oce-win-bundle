@@ -44,6 +44,7 @@
 //
 //-----------------------------------------------------------------------------
 
+#include <cstring>
 #include "OpenEXRConfig.h"
 
 namespace Imf {

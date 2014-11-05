@@ -44,7 +44,7 @@
 
 #include "ImathMatrixAlgo.h"
 
-#if defined(__MINGW64__)
+#if defined(__MINGW64__) || defined(__MINGW32__)
     #include <cmath>
 #endif
 
