@@ -202,6 +202,7 @@ add_library(freetype
   ${BASE_SRCS}
 )
 
+if(false)
 if (BUILD_FRAMEWORK)
   set_property(SOURCE ${PUBLIC_CONFIG_HEADERS}
     PROPERTY MACOSX_PACKAGE_LOCATION Headers/config
@@ -249,5 +250,5 @@ include(CPack)
 
 # add make dist target
 add_custom_target(dist COMMAND ${CMAKE_MAKE_PROGRAM} package_source)
-
+endif()
 # eof
