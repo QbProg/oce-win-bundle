@@ -20,7 +20,6 @@
 // ==========================================================
 
 
-#include <cstdio>
 #include "fipTest.h"
 
 using namespace std;

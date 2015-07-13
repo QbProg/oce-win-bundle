@@ -1,6 +1,6 @@
 /* -*- C++ -*-
  * File: var_defines.h
- * Copyright 2008-2009 LibRaw LLC (info@libraw.org)
+ * Copyright 2008-2013 LibRaw LLC (info@libraw.org)
  * Created: Sat Mar  8, 2008
  *
  * LibRaw redefinitions of dcraw internal variables
@@ -21,16 +21,21 @@ it under the terms of the one of three licenses as you choose:
 #ifndef VAR_DEFINES_H
 #define VAR_DEFINES_H
 
+
 // imgdata.idata
 #define make            (imgdata.idata.make)
 #define model           (imgdata.idata.model)
+#define software        (imgdata.idata.software)
 #define is_raw          (imgdata.idata.raw_count)
 #define dng_version     (imgdata.idata.dng_version)
 #define is_foveon       (imgdata.idata.is_foveon)
 #define colors          (imgdata.idata.colors)
 #define cdesc           (imgdata.idata.cdesc)
 #define filters         (imgdata.idata.filters)
-
+#define xtrans          (imgdata.idata.xtrans)
+#define xtrans_abs      (imgdata.idata.xtrans_abs)
+#define xmpdata			(imgdata.idata.xmpdata)
+#define xmplen			(imgdata.idata.xmplen)
 //imgdata image
 #define image           (imgdata.image)
 #define raw_image       (imgdata.rawdata.raw_image)
@@ -39,6 +44,7 @@ it under the terms of the one of three licenses as you choose:
 // imgdata.sizes
 #define raw_height      (imgdata.sizes.raw_height)
 #define raw_width       (imgdata.sizes.raw_width)
+#define raw_pitch       (imgdata.sizes.raw_pitch)
 #define height          (imgdata.sizes.height)
 #define width           (imgdata.sizes.width)
 #define top_margin      (imgdata.sizes.top_margin)
@@ -49,6 +55,7 @@ it under the terms of the one of three licenses as you choose:
 #define iwidth          (imgdata.sizes.iwidth)
 #define pixel_aspect    (imgdata.sizes.pixel_aspect)
 #define flip            (imgdata.sizes.flip)
+#define mask            (imgdata.sizes.mask)
 
 //imgdata.color
 #define white           (imgdata.color.white)
@@ -71,6 +78,7 @@ it under the terms of the one of three licenses as you choose:
 #define flash_used      (imgdata.color.flash_used)
 #define canon_ev        (imgdata.color.canon_ev)
 #define model2          (imgdata.color.model2)
+#define baseline_exposure  (imgdata.color.baseline_exposure)
 
 //imgdata.thumbnail
 
@@ -101,7 +109,6 @@ it under the terms of the one of three licenses as you choose:
 #define threshold       (imgdata.params.threshold)
 #define half_size       (imgdata.params.half_size)
 #define four_color_rgb  (imgdata.params.four_color_rgb)
-#define document_mode   (imgdata.params.document_mode)
 #define highlight       (imgdata.params.highlight)
 //#define verbose         (imgdata.params.verbose)
 #define use_auto_wb     (imgdata.params.use_auto_wb)
@@ -113,6 +120,7 @@ it under the terms of the one of three licenses as you choose:
 #define output_tiff     (imgdata.params.output_tiff)
 #define med_passes      (imgdata.params.med_passes)
 #define no_auto_bright  (imgdata.params.no_auto_bright)
+#define auto_bright_thr  (imgdata.params.auto_bright_thr)
 #define use_fuji_rotate (imgdata.params.use_fuji_rotate)
 #define filtering_mode (imgdata.params.filtering_mode)
 
@@ -144,6 +152,7 @@ it under the terms of the one of three licenses as you choose:
 #define ofp             libraw_internal_data.internal_data.output
 #define profile_offset  (libraw_internal_data.internal_data.profile_offset)
 #define thumb_offset    (libraw_internal_data.internal_data.toffset)
+#define pana_black		(libraw_internal_data.internal_data.pana_black)
 
 //libraw_internal_data.internal_output_params
 #define mix_green       (libraw_internal_data.internal_output_params.mix_green)
@@ -193,6 +202,7 @@ it under the terms of the one of three licenses as you choose:
 #define fseeko(stream,o,w)	 stream->seek(o,w)
 #define ftell(stream)		 stream->tell()
 #define ftello(stream)		 stream->tell()
+#define feof(stream)		 stream->eof()
 #ifdef getc
 #undef getc
 #endif

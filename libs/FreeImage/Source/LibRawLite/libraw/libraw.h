@@ -1,6 +1,6 @@
 /* -*- C++ -*-
  * File: libraw.h
- * Copyright 2008-2010 LibRaw LLC (info@libraw.org)
+ * Copyright 2008-2013 LibRaw LLC (info@libraw.org)
  * Created: Sat Mar  8, 2008 
  *
  * LibRaw C++ interface
@@ -53,9 +53,14 @@ DllDef    const char          *libraw_strprogress(enum LibRaw_progress);
 DllDef    libraw_data_t       *libraw_init(unsigned int flags);
 DllDef    int                 libraw_open_file(libraw_data_t*, const char *);
 DllDef    int                 libraw_open_file_ex(libraw_data_t*, const char *, INT64 max_buff_sz);
+#if defined(_WIN32) && !defined(__MINGW32__) && defined(_MSC_VER) && (_MSC_VER > 1310)
+DllDef    int                 libraw_open_wfile(libraw_data_t*, const wchar_t *);
+DllDef    int                 libraw_open_wfile_ex(libraw_data_t*, const wchar_t *, INT64 max_buff_sz);
+#endif
 DllDef    int                 libraw_open_buffer(libraw_data_t*, void * buffer, size_t size);
 DllDef    int                 libraw_unpack(libraw_data_t*);
 DllDef    int                 libraw_unpack_thumb(libraw_data_t*);
+DllDef    void                libraw_recycle_datastream(libraw_data_t*);
 DllDef    void                libraw_recycle(libraw_data_t*);
 DllDef    void                libraw_close(libraw_data_t*);
 DllDef    void                libraw_subtract_black(libraw_data_t*);
@@ -68,15 +73,17 @@ DllDef    int                 libraw_versionNumber();
 DllDef    const char**        libraw_cameraList();
 DllDef    int                 libraw_cameraCount();
 
+  /* helpers */
 DllDef    void                libraw_set_memerror_handler(libraw_data_t*, memory_callback cb, void *datap);
+DllDef    void                libraw_set_exifparser_handler(libraw_data_t*, exif_parser_callback cb, void *datap);
 DllDef    void                libraw_set_dataerror_handler(libraw_data_t*,data_callback func,void *datap);
 DllDef    void                libraw_set_progress_handler(libraw_data_t*,progress_callback cb,void *datap);
 DllDef    const char *        libraw_unpack_function_name(libraw_data_t* lr);
 DllDef    int                 libraw_get_decoder_info(libraw_data_t* lr,libraw_decoder_info_t* d);
+DllDef    int libraw_COLOR(libraw_data_t*,int row, int col);
 
     /* DCRAW compatibility */
 DllDef    int                 libraw_adjust_sizes_info_only(libraw_data_t*);
-DllDef    int                 libraw_dcraw_document_mode_processing(libraw_data_t*);
 DllDef    int                 libraw_dcraw_ppm_tiff_writer(libraw_data_t* lr,const char *filename);
 DllDef    int                 libraw_dcraw_thumb_writer(libraw_data_t* lr,const char *fname);
 DllDef    int                 libraw_dcraw_process(libraw_data_t* lr);
@@ -97,21 +104,28 @@ class DllDef LibRaw
     int verbose;
 
     LibRaw(unsigned int flags = LIBRAW_OPTIONS_NONE);
-    
     libraw_output_params_t*     output_params_ptr() { return &imgdata.params;}
     int                         open_file(const char *fname, INT64 max_buffered_sz=LIBRAW_USE_STREAMS_DATASTREAM_MAXSIZE);
+#if defined(_WIN32) && !defined(__MINGW32__) && defined(_MSC_VER) && (_MSC_VER > 1310)
+	int                         open_file(const wchar_t *fname, INT64 max_buffered_sz=LIBRAW_USE_STREAMS_DATASTREAM_MAXSIZE);
+#endif
     int                         open_buffer(void *buffer, size_t size);
-    int                         open_datastream(LibRaw_abstract_datastream *);
+    virtual int                 open_datastream(LibRaw_abstract_datastream *);
+	int							error_count(){return libraw_internal_data.unpacker_data.data_error;}
+	void							recycle_datastream();
     int                         unpack(void);
     int                         unpack_thumb(void);
 
     int                         adjust_sizes_info_only(void);
-    void                        subtract_black();
+    LibRaw_colormatrix_type	camera_color_type();
+    int                         subtract_black();
+    int                         subtract_black_internal();
     int                         raw2image();
-    int                         raw2image_ex();
+    int                         raw2image_ex(int do_subtract_black);
     void                        raw2image_start();
     void                        free_image();
     int                         adjust_maximum();
+    void		      	set_exifparser_handler( exif_parser_callback cb,void *data) {callbacks.exifparser_data = data; callbacks.exif_cb = cb; }
     void                        set_memerror_handler( memory_callback cb,void *data) {callbacks.memcb_data = data; callbacks.mem_cb = cb; }
     void                        set_dataerror_handler(data_callback func, void *data) { callbacks.datacb_data = data; callbacks.data_cb = func;}
     void                        set_progress_handler(progress_callback pcb, void *data) { callbacks.progresscb_data = data; callbacks.progress_cb = pcb;}
@@ -124,13 +138,18 @@ class DllDef LibRaw
     static const char*          strprogress(enum LibRaw_progress);
     static const char*          strerror(int p);
     /* dcraw emulation */
-    int                         dcraw_document_mode_processing();
     int                         dcraw_ppm_tiff_writer(const char *filename);
     int                         dcraw_thumb_writer(const char *fname);
     int                         dcraw_process(void);
+    /* information calls */
+    int is_fuji_rotated(){return libraw_internal_data.internal_output_params.fuji_width;}
+    int is_sraw();
+	int sraw_midpoint();
+	int is_nikon_sraw();
+	int is_coolscan_nef();
     /* memory writers */
-    libraw_processed_image_t*   dcraw_make_mem_image(int *errcode=NULL);  
-    libraw_processed_image_t*   dcraw_make_mem_thumb(int *errcode=NULL);
+    virtual libraw_processed_image_t*   dcraw_make_mem_image(int *errcode=NULL);  
+    virtual libraw_processed_image_t*   dcraw_make_mem_thumb(int *errcode=NULL);
     static void                 dcraw_clear_mem(libraw_processed_image_t*);
     
     /* Additional calls for make_mem_image */
@@ -139,18 +158,45 @@ class DllDef LibRaw
 
     /* free all internal data structures */
     void         recycle(); 
-    ~LibRaw(void) { recycle(); delete tls; }
+    virtual ~LibRaw(void); 
 
     int COLOR(int row, int col) { return libraw_internal_data.internal_output_params.fuji_width? FCF(row,col):FC(row,col);}
  
     int FC(int row,int col) { return (imgdata.idata.filters >> (((row << 1 & 14) | (col & 1)) << 1) & 3);}
-    int         fc (int row, int col);
+    int         fcol (int row, int col);
     
     const char *unpack_function_name();
-    int get_decoder_info(libraw_decoder_info_t* d_info);
+    virtual int get_decoder_info(libraw_decoder_info_t* d_info);
     libraw_internal_data_t * get_internal_data_pointer(){ return &libraw_internal_data; }
 
-  private:
+    /* Debanding filter */
+    int  wf_remove_banding();
+
+  /* Phase one correction/subtractBL calls */
+	/* Returns libraw error code */
+  
+  int phase_one_subtract_black(ushort *src, ushort *dest);
+  int phase_one_correct();
+
+  int  set_rawspeed_camerafile(char *filename);
+  void setCancelFlag();
+  void clearCancelFlag();
+  virtual void adobe_coeff (const char *, const char *, int internal_only=0);
+
+
+protected:
+    void checkCancel();
+	void        cam_xyz_coeff(float _rgb_cam[3][4], double cam_xyz[4][3]);
+    void phase_one_allocate_tempbuffer();
+    void phase_one_free_tempbuffer();
+    virtual int  is_phaseone_compressed();
+    /* Hotspots */
+    virtual void copy_fuji_uncropped(unsigned short cblack[4], unsigned short *dmaxp);
+    virtual void copy_bayer(unsigned short cblack[4], unsigned short *dmaxp);
+    virtual void fuji_rotate();
+    virtual void convert_to_rgb_loop(float out_cam[3][4]);
+    virtual void lin_interpolate_loop(int code[16][16][32],int size);
+    virtual void scale_colors_loop(float scale_mul[4]);
 
     int FCF(int row,int col) { 
         int rr,cc;
@@ -164,6 +210,7 @@ class DllDef LibRaw
         return FC(rr,cc);
     }
 
+    void adjust_bl();
     void*        malloc(size_t t);
     void*        calloc(size_t n,size_t t);
     void*        realloc(void *p, size_t s);
@@ -179,6 +226,7 @@ class DllDef LibRaw
     libraw_callbacks_t callbacks;
 
     LibRaw_constants rgb_constants;
+
     void        (LibRaw:: *write_thumb)();
     void        (LibRaw:: *write_fun)();
     void        (LibRaw:: *load_raw)();
@@ -186,14 +234,17 @@ class DllDef LibRaw
 
     void        kodak_thumb_loader();
     void        write_thumb_ppm_tiff(FILE *); 
+    void        x3f_thumb_loader();
+#ifdef LIBRAW_DEMOSAIC_PACK_GPL2
     void        foveon_thumb_loader (void);
+#endif
     
     int         own_filtering_supported(){ return 0;}
     void        identify();
-    void        identify2(unsigned, unsigned, char*);
     void        write_ppm_tiff ();
     void        convert_to_rgb();
     void        remove_zeroes();
+    void        crop_masked_pixels();
 #ifndef NO_LCMS
     void	apply_profile(const char*,const char*);
 #endif
@@ -202,7 +253,11 @@ class DllDef LibRaw
     void        lin_interpolate();
     void        vng_interpolate();
     void        ppg_interpolate();
+    void        cielab(ushort rgb[3], short lab[3]);
+    void        xtrans_interpolate(int);
     void        ahd_interpolate();
+    void        dht_interpolate();
+    void        aahd_interpolate();
 
     /* from demosaic pack */
     void        ahd_interpolate_mod();
@@ -231,23 +286,37 @@ class DllDef LibRaw
     void        recover_highlights();
     void        green_matching();
 
-    void        fuji_rotate();
     void        stretch();
 
+#ifdef LIBRAW_DEMOSAIC_PACK_GPL2
     void        foveon_thumb ();
+#endif
     void        jpeg_thumb_writer (FILE *tfp,char *thumb,int thumb_length);
     void        jpeg_thumb ();
     void        ppm_thumb ();
+    void        ppm16_thumb();
     void        layer_thumb ();
     void        rollei_thumb ();
     void        kodak_thumb_load_raw();
 
+#ifdef LIBRAW_DEMOSAIC_PACK_GPL2
     void        foveon_decoder (unsigned size, unsigned code);
+#endif
     unsigned    get4();
 
     int         flip_index (int row, int col);
     void        gamma_curve (double pwr, double ts, int mode, int imax);
+    void        cubic_spline (const int *x_, const int *y_, const int len);
 
+  /* RawSpeed data */
+  void		*_rawspeed_camerameta;
+  void          *_rawspeed_decoder;
+  void		fix_after_rawspeed(int bl);
+  /* Fast cancel flag */
+  long          _exitflag;
+
+  /* X3F data */
+  void          *_x3f_data;
 
 #ifdef LIBRAW_LIBRARY_BUILD 
 #include "internal/libraw_internal_funcs.h"

@@ -1,5 +1,4 @@
-
-Libpng 1.5.13 - September 27, 2012
+Libpng 1.6.16 - December 22, 2014
 
 This is a public release of libpng, intended for use in production codes.
 
@@ -8,35 +7,30 @@ Files available for download:
 Source files with LF line endings (for Unix/Linux) and with a
 "configure" script
 
-   libpng-1.5.13.tar.xz (LZMA-compressed, recommended)
-   libpng-1.5.13.tar.gz
-   libpng-1.5.13.tar.bz2
+   libpng-1.6.16.tar.xz (LZMA-compressed, recommended)
+   libpng-1.6.16.tar.gz
 
 Source files with CRLF line endings (for Windows), without the
 "configure" script
 
-   lpng1513.7z  (LZMA-compressed, recommended)
-   lpng1513.zip
+   lpng1616.7z  (LZMA-compressed, recommended)
+   lpng1616.zip
 
 Other information:
 
-   libpng-1.5.13-README.txt
-   libpng-1.5.13-LICENSE.txt
+   libpng-1.6.16-README.txt
+   libpng-1.6.16-LICENSE.txt
+   libpng-1.6.16-*.asc (armored detached GPG signatures)
 
-Changes since the last public release (1.5.12):
-  Do not compile PNG_DEPRECATED, PNG_ALLOC and PNG_PRIVATE when __GNUC__ < 3.
-  Removed references to png_zalloc() and png_zfree() from the manual.
-  Revised PNG_FP_EXPORT and PNG_FIXED_EXPORT macros to avoid generating
-    lone semicolons (patch ported from libpng-1.6.0beta11).
-  Corrected handling of the image array and the row_pointers array in example.c
-  When png_set_filler is used to strip a filler channel during write, the
-    code prior to 1.5 would ignore the case where the output required an
-    alpha channel or when the output was a palettized PNG.  In libpng-1.5 the
-    ignorance was lost and libpng proceeded to strip the channel resulting
-    in a bad (potential memory overwrite) failure later.  This reverts
-    the behavior to the pre-1.5 state but issues a warning. libpng-1.6 is
-    expected to issue an error on the erroneous png_set_filler call.
-  Use png_memset() consistently (pngmem.c contained some bare "memset" calls).
+Changes since the last public release (1.6.15):
+  Added ".align 2" to arm/filter_neon.S to support old GAS assemblers that
+    don't do alignment correctly.
+  Revised Makefile.am and scripts/*.dfn to work with MinGW/MSYS;
+    renamed scripts/*.dfn to scripts/*.c (Bob Friesenhahn and John Bowler).
+  Quiet a "comparison always true" warning in pngstest.c (John Bowler).
+  Restored a test on width that was removed from png.c at libpng-1.6.9
+    (Bug report by Alex Eubanks).
+  Fixed an overflow in png_combine_row with very wide interlaced images.
 
 Send comments/corrections/commendations to png-mng-implement at lists.sf.net
 (subscription required; visit
