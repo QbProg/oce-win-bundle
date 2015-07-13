@@ -5,7 +5,7 @@
 /*    Auto-fitter dummy routines to be used if no hinting should be        */
 /*    performed (specification).                                           */
 /*                                                                         */
-/*  Copyright 2003-2005, 2011, 2013 by                                     */
+/*  Copyright 2003-2015 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -25,13 +25,9 @@
 
 FT_BEGIN_HEADER
 
- /*  A dummy writing system and script class used when no hinting should be
-  *  performed.
-  */
+  /* A dummy writing system used when no hinting should be performed. */
 
   AF_DECLARE_WRITING_SYSTEM_CLASS( af_dummy_writing_system_class )
-
-  AF_DECLARE_SCRIPT_CLASS( af_dflt_script_class )
 
 /* */
 

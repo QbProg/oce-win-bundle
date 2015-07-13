@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    SFNT object management (base).                                       */
 /*                                                                         */
-/*  Copyright 1996-2008, 2010-2013 by                                      */
+/*  Copyright 1996-2015 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -348,29 +348,22 @@
   }
 
 
-#define WRITE_BYTE( p, v )     \
-          do                   \
-          {                    \
-            *(p)++ = (v) >> 0; \
-                               \
+#define WRITE_USHORT( p, v )                \
+          do                                \
+          {                                 \
+            *(p)++ = (FT_Byte)( (v) >> 8 ); \
+            *(p)++ = (FT_Byte)( (v) >> 0 ); \
+                                            \
           } while ( 0 )
 
-#define WRITE_USHORT( p, v )   \
-          do                   \
-          {                    \
-            *(p)++ = (v) >> 8; \
-            *(p)++ = (v) >> 0; \
-                               \
-          } while ( 0 )
-
-#define WRITE_ULONG( p, v )     \
-          do                    \
-          {                     \
-            *(p)++ = (v) >> 24; \
-            *(p)++ = (v) >> 16; \
-            *(p)++ = (v) >>  8; \
-            *(p)++ = (v) >>  0; \
-                                \
+#define WRITE_ULONG( p, v )                  \
+          do                                 \
+          {                                  \
+            *(p)++ = (FT_Byte)( (v) >> 24 ); \
+            *(p)++ = (FT_Byte)( (v) >> 16 ); \
+            *(p)++ = (FT_Byte)( (v) >>  8 ); \
+            *(p)++ = (FT_Byte)( (v) >>  0 ); \
+                                             \
           } while ( 0 )
 
 
@@ -383,8 +376,8 @@
     FT_FREE( stream->base );
 
     stream->size  = 0;
-    stream->base  = 0;
-    stream->close = 0;
+    stream->base  = NULL;
+    stream->close = NULL;
   }
 
 
@@ -574,8 +567,10 @@
 
 
       if ( table->Offset != woff_offset                         ||
-           table->Offset + table->CompLength > woff.length      ||
-           sfnt_offset + table->OrigLength > woff.totalSfntSize ||
+           table->CompLength > woff.length                      ||
+           table->Offset > woff.length - table->CompLength      ||
+           table->OrigLength > woff.totalSfntSize               ||
+           sfnt_offset > woff.totalSfntSize - table->OrigLength ||
            table->CompLength > table->OrigLength                )
       {
         error = FT_THROW( Invalid_Table );
@@ -585,8 +580,8 @@
       table->OrigOffset = sfnt_offset;
 
       /* The offsets must be multiples of 4. */
-      woff_offset += ( table->CompLength + 3 ) & ~3;
-      sfnt_offset += ( table->OrigLength + 3 ) & ~3;
+      woff_offset += ( table->CompLength + 3 ) & ~3U;
+      sfnt_offset += ( table->OrigLength + 3 ) & ~3U;
     }
 
     /*
@@ -614,7 +609,7 @@
     if ( woff.privOffset )
     {
       /* ... if it isn't the last block. */
-      woff_offset = ( woff_offset + 3 ) & ~3;
+      woff_offset = ( woff_offset + 3 ) & ~3U;
 
       if ( woff.privOffset != woff_offset                  ||
            woff.privOffset + woff.privLength > woff.length )
@@ -661,6 +656,8 @@
       }
       else
       {
+#ifdef FT_CONFIG_OPTION_USE_ZLIB
+
         /* Uncompress with zlib. */
         FT_ULong  output_len = table->OrigLength;
 
@@ -675,6 +672,13 @@
           error = FT_THROW( Invalid_Table );
           goto Exit;
         }
+
+#else /* !FT_CONFIG_OPTION_USE_ZLIB */
+
+        error = FT_THROW( Unimplemented_Feature );
+        goto Exit;
+
+#endif /* !FT_CONFIG_OPTION_USE_ZLIB */
       }
 
       FT_FRAME_EXIT();
@@ -717,7 +721,6 @@
   }
 
 
-#undef WRITE_BYTE
 #undef WRITE_USHORT
 #undef WRITE_ULONG
 
@@ -1014,7 +1017,6 @@
      * the 'glyf' outline and advertise it as a bitmap-only font. */
     if ( is_apple_sbix )
       has_outline = FALSE;
-
 
     /* if this font doesn't contain outlines, we try to load */
     /* a `bhed' table                                        */
@@ -1429,8 +1431,8 @@
         root->ascender  = face->horizontal.Ascender;
         root->descender = face->horizontal.Descender;
 
-        root->height = (FT_Short)( root->ascender - root->descender +
-                                   face->horizontal.Line_Gap );
+        root->height = root->ascender - root->descender +
+                       face->horizontal.Line_Gap;
 
         if ( !( root->ascender || root->descender ) )
         {
@@ -1441,23 +1443,24 @@
               root->ascender  = face->os2.sTypoAscender;
               root->descender = face->os2.sTypoDescender;
 
-              root->height = (FT_Short)( root->ascender - root->descender +
-                                         face->os2.sTypoLineGap );
+              root->height = root->ascender - root->descender +
+                             face->os2.sTypoLineGap;
             }
             else
             {
               root->ascender  =  (FT_Short)face->os2.usWinAscent;
               root->descender = -(FT_Short)face->os2.usWinDescent;
 
-              root->height = (FT_UShort)( root->ascender - root->descender );
+              root->height = root->ascender - root->descender;
             }
           }
         }
 
-        root->max_advance_width  = face->horizontal.advance_Width_Max;
-        root->max_advance_height = (FT_Short)( face->vertical_info
-                                     ? face->vertical.advance_Height_Max
-                                     : root->height );
+        root->max_advance_width  =
+          (FT_Short)face->horizontal.advance_Width_Max;
+        root->max_advance_height =
+          (FT_Short)( face->vertical_info ? face->vertical.advance_Height_Max
+                                          : root->height );
 
         /* See http://www.microsoft.com/OpenType/OTSpec/post.htm -- */
         /* Adjust underline position from top edge to centre of     */
@@ -1567,7 +1570,7 @@
 
     FT_FREE( face->postscript_name );
 
-    face->sfnt = 0;
+    face->sfnt = NULL;
   }
 
 

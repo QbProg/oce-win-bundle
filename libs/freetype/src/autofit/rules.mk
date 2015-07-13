@@ -3,7 +3,7 @@
 #
 
 
-# Copyright 2003-2007, 2011, 2013 by
+# Copyright 2003-2015 by
 # David Turner, Robert Wilhelm, and Werner Lemberg.
 #
 # This file is part of the FreeType project, and may only be used, modified,
@@ -20,7 +20,10 @@ AUTOF_DIR := $(SRC_DIR)/autofit
 
 # compilation flags for the driver
 #
-AUTOF_COMPILE := $(FT_COMPILE) $I$(subst /,$(COMPILER_SEP),$(AUTOF_DIR))
+AUTOF_COMPILE := $(CC) $(ANSIFLAGS)                              \
+                       $I$(subst /,$(COMPILER_SEP),$(AUTOF_DIR)) \
+                       $(INCLUDE_FLAGS)                          \
+                       $(FT_CFLAGS)
 
 
 # AUTOF driver sources (i.e., C files)
@@ -36,13 +39,17 @@ AUTOF_DRV_SRC := $(AUTOF_DIR)/afangles.c \
                  $(AUTOF_DIR)/afloader.c \
                  $(AUTOF_DIR)/afmodule.c \
                  $(AUTOF_DIR)/afpic.c    \
-                 $(AUTOF_DIR)/afwarp.c
+                 $(AUTOF_DIR)/afranges.c \
+                 $(AUTOF_DIR)/afwarp.c   \
+                 $(AUTOF_DIR)/hbshim.c
 
 # AUTOF driver headers
 #
 AUTOF_DRV_H := $(AUTOF_DRV_SRC:%c=%h)  \
+               $(AUTOF_DIR)/afcover.h  \
                $(AUTOF_DIR)/aferrors.h \
                $(AUTOF_DIR)/afscript.h \
+               $(AUTOF_DIR)/afstyles.h \
                $(AUTOF_DIR)/aftypes.h  \
                $(AUTOF_DIR)/afwrtsys.h
 

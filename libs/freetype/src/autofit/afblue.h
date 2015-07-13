@@ -7,7 +7,7 @@
 /*                                                                         */
 /*    Auto-fitter data for blue strings (specification).                   */
 /*                                                                         */
-/*  Copyright 2013 by                                                      */
+/*  Copyright 2013-2015 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -67,49 +67,60 @@ FT_BEGIN_HEADER
   /* At the bottommost level, we define strings for finding blue zones. */
 
 
-#define AF_BLUE_STRING_MAX_LEN  25
+#define AF_BLUE_STRING_MAX_LEN  51
 
   /* The AF_Blue_String enumeration values are offsets into the */
   /* `af_blue_strings' array.                                   */
 
   typedef enum  AF_Blue_String_
   {
-    AF_BLUE_STRING_LATIN_CAPITAL_TOP = 0,
-    AF_BLUE_STRING_LATIN_CAPITAL_BOTTOM = 9,
-    AF_BLUE_STRING_LATIN_SMALL_F_TOP = 18,
-    AF_BLUE_STRING_LATIN_SMALL = 26,
-    AF_BLUE_STRING_LATIN_SMALL_DESCENDER = 34,
-    AF_BLUE_STRING_GREEK_CAPITAL_TOP = 40,
-    AF_BLUE_STRING_GREEK_CAPITAL_BOTTOM = 55,
-    AF_BLUE_STRING_GREEK_SMALL_BETA_TOP = 68,
-    AF_BLUE_STRING_GREEK_SMALL = 81,
-    AF_BLUE_STRING_GREEK_SMALL_DESCENDER = 98,
-    AF_BLUE_STRING_CYRILLIC_CAPITAL_TOP = 115,
-    AF_BLUE_STRING_CYRILLIC_CAPITAL_BOTTOM = 132,
-    AF_BLUE_STRING_CYRILLIC_SMALL = 149,
-    AF_BLUE_STRING_CYRILLIC_SMALL_DESCENDER = 166,
-    AF_BLUE_STRING_HEBREW_TOP = 173,
-    AF_BLUE_STRING_HEBREW_BOTTOM = 190,
-    AF_BLUE_STRING_HEBREW_DESCENDER = 203,
-    af_blue_1_1 = 213,
+    AF_BLUE_STRING_ARABIC_TOP = 0,
+    AF_BLUE_STRING_ARABIC_JOIN = 13,
+    AF_BLUE_STRING_CYRILLIC_CAPITAL_TOP = 24,
+    AF_BLUE_STRING_CYRILLIC_CAPITAL_BOTTOM = 41,
+    AF_BLUE_STRING_CYRILLIC_SMALL = 58,
+    AF_BLUE_STRING_CYRILLIC_SMALL_DESCENDER = 75,
+    AF_BLUE_STRING_DEVANAGARI_BASE = 82,
+    AF_BLUE_STRING_DEVANAGARI_TOP = 107,
+    AF_BLUE_STRING_DEVANAGARI_HEAD = 132,
+    AF_BLUE_STRING_DEVANAGARI_BOTTOM = 157,
+    AF_BLUE_STRING_GREEK_CAPITAL_TOP = 164,
+    AF_BLUE_STRING_GREEK_CAPITAL_BOTTOM = 179,
+    AF_BLUE_STRING_GREEK_SMALL_BETA_TOP = 192,
+    AF_BLUE_STRING_GREEK_SMALL = 205,
+    AF_BLUE_STRING_GREEK_SMALL_DESCENDER = 222,
+    AF_BLUE_STRING_HEBREW_TOP = 239,
+    AF_BLUE_STRING_HEBREW_BOTTOM = 256,
+    AF_BLUE_STRING_HEBREW_DESCENDER = 269,
+    AF_BLUE_STRING_LATIN_CAPITAL_TOP = 280,
+    AF_BLUE_STRING_LATIN_CAPITAL_BOTTOM = 289,
+    AF_BLUE_STRING_LATIN_SMALL_F_TOP = 298,
+    AF_BLUE_STRING_LATIN_SMALL = 306,
+    AF_BLUE_STRING_LATIN_SMALL_DESCENDER = 314,
+    AF_BLUE_STRING_TELUGU_TOP = 320,
+    AF_BLUE_STRING_TELUGU_BOTTOM = 342,
+    AF_BLUE_STRING_THAI_TOP = 364,
+    AF_BLUE_STRING_THAI_BOTTOM = 383,
+    AF_BLUE_STRING_THAI_ASCENDER = 405,
+    AF_BLUE_STRING_THAI_LARGE_ASCENDER = 415,
+    AF_BLUE_STRING_THAI_DESCENDER = 425,
+    AF_BLUE_STRING_THAI_LARGE_DESCENDER = 438,
+    AF_BLUE_STRING_THAI_DIGIT_TOP = 445,
+    af_blue_1_1 = 454,
 #ifdef AF_CONFIG_OPTION_CJK
-    AF_BLUE_STRING_CJK_TOP_FILL = af_blue_1_1 + 1,
-    AF_BLUE_STRING_CJK_TOP_UNFILL = af_blue_1_1 + 77,
-    AF_BLUE_STRING_CJK_BOTTOM_FILL = af_blue_1_1 + 153,
-    AF_BLUE_STRING_CJK_BOTTOM_UNFILL = af_blue_1_1 + 229,
+    AF_BLUE_STRING_CJK_TOP = af_blue_1_1 + 1,
+    AF_BLUE_STRING_CJK_BOTTOM = af_blue_1_1 + 153,
     af_blue_1_1_1 = af_blue_1_1 + 304,
 #ifdef AF_CONFIG_OPTION_CJK_BLUE_HANI_VERT
-    AF_BLUE_STRING_CJK_LEFT_FILL = af_blue_1_1_1 + 1,
-    AF_BLUE_STRING_CJK_LEFT_UNFILL = af_blue_1_1_1 + 77,
-    AF_BLUE_STRING_CJK_RIGHT_FILL = af_blue_1_1_1 + 153,
-    AF_BLUE_STRING_CJK_RIGHT_UNFILL = af_blue_1_1_1 + 229,
-    af_blue_1_2_1 = af_blue_1_1_1 + 304,
+    AF_BLUE_STRING_CJK_LEFT = af_blue_1_1_1 + 1,
+    AF_BLUE_STRING_CJK_RIGHT = af_blue_1_1_1 + 153,
+    af_blue_1_1_2 = af_blue_1_1_1 + 304,
 #else
-    af_blue_1_2_1 = af_blue_1_1_1 + 0,
+    af_blue_1_1_2 = af_blue_1_1_1 + 0,
 #endif /* AF_CONFIG_OPTION_CJK_BLUE_HANI_VERT */
-    af_blue_1_2 = af_blue_1_2_1 + 0,
+    af_blue_1_2 = af_blue_1_1_2 + 0,
 #else
-    af_blue_1_2 = af_blue_1_2_1 + 0,
+    af_blue_1_2 = af_blue_1_1 + 0,
 #endif /* AF_CONFIG_OPTION_CJK                */
 
 
@@ -130,45 +141,49 @@ FT_BEGIN_HEADER
   /*************************************************************************/
   /*************************************************************************/
 
-  /* The next level is to group blue strings into script-specific sets. */
+  /* The next level is to group blue strings into style-specific sets. */
 
 
   /* Properties are specific to a writing system.  We assume that a given  */
   /* blue string can't be used in more than a single writing system, which */
   /* is a safe bet.                                                        */
-#define AF_BLUE_PROPERTY_LATIN_TOP       ( 1 << 0 )
-#define AF_BLUE_PROPERTY_LATIN_X_HEIGHT  ( 1 << 1 )
-#define AF_BLUE_PROPERTY_LATIN_LONG      ( 1 << 2 )
+#define AF_BLUE_PROPERTY_LATIN_TOP       ( 1U << 0 )  /* must have value 1 */
+#define AF_BLUE_PROPERTY_LATIN_NEUTRAL   ( 1U << 1 )
+#define AF_BLUE_PROPERTY_LATIN_X_HEIGHT  ( 1U << 2 )
+#define AF_BLUE_PROPERTY_LATIN_LONG      ( 1U << 3 )
 
-#define AF_BLUE_PROPERTY_CJK_HORIZ  ( 1 << 0 )
-#define AF_BLUE_PROPERTY_CJK_TOP    ( 1 << 1 )
-#define AF_BLUE_PROPERTY_CJK_FILL   ( 1 << 2 )
+#define AF_BLUE_PROPERTY_CJK_TOP    ( 1U << 0 )       /* must have value 1 */
+#define AF_BLUE_PROPERTY_CJK_HORIZ  ( 1U << 1 )       /* must have value 2 */
 #define AF_BLUE_PROPERTY_CJK_RIGHT  AF_BLUE_PROPERTY_CJK_TOP
 
 
-#define AF_BLUE_STRINGSET_MAX_LEN  9
+#define AF_BLUE_STRINGSET_MAX_LEN  8
 
   /* The AF_Blue_Stringset enumeration values are offsets into the */
   /* `af_blue_stringsets' array.                                   */
 
   typedef enum  AF_Blue_Stringset_
   {
-    AF_BLUE_STRINGSET_LATN = 0,
-    AF_BLUE_STRINGSET_GREK = 7,
-    AF_BLUE_STRINGSET_CYRL = 14,
-    AF_BLUE_STRINGSET_HEBR = 20,
-    af_blue_2_1 = 24,
+    AF_BLUE_STRINGSET_ARAB = 0,
+    AF_BLUE_STRINGSET_CYRL = 3,
+    AF_BLUE_STRINGSET_DEVA = 9,
+    AF_BLUE_STRINGSET_GREK = 15,
+    AF_BLUE_STRINGSET_HEBR = 22,
+    AF_BLUE_STRINGSET_LATN = 26,
+    AF_BLUE_STRINGSET_TELU = 33,
+    AF_BLUE_STRINGSET_THAI = 36,
+    af_blue_2_1 = 44,
 #ifdef AF_CONFIG_OPTION_CJK
     AF_BLUE_STRINGSET_HANI = af_blue_2_1 + 0,
-    af_blue_2_1_1 = af_blue_2_1 + 4,
+    af_blue_2_1_1 = af_blue_2_1 + 2,
 #ifdef AF_CONFIG_OPTION_CJK_BLUE_HANI_VERT
-    af_blue_2_2_1 = af_blue_2_1_1 + 4,
+    af_blue_2_1_2 = af_blue_2_1_1 + 2,
 #else
-    af_blue_2_2_1 = af_blue_2_1_1 + 0,
+    af_blue_2_1_2 = af_blue_2_1_1 + 0,
 #endif /* AF_CONFIG_OPTION_CJK_BLUE_HANI_VERT */
-    af_blue_2_2 = af_blue_2_2_1 + 1,
+    af_blue_2_2 = af_blue_2_1_2 + 1,
 #else
-    af_blue_2_2 = af_blue_2_2_1 + 0,
+    af_blue_2_2 = af_blue_2_1 + 0,
 #endif /* AF_CONFIG_OPTION_CJK                */
 
 

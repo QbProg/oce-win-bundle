@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    Adobe's code for handling CFF hints (body).                          */
 /*                                                                         */
-/*  Copyright 2007-2013 Adobe Systems Incorporated.                        */
+/*  Copyright 2007-2014 Adobe Systems Incorporated.                        */
 /*                                                                         */
 /*  This software, and all works of authorship, whether in source or       */
 /*  object code form as indicated by the copyright notice(s) included      */
@@ -304,9 +304,6 @@
   cf2_hintmap_map( CF2_HintMap  hintmap,
                    CF2_Fixed    csCoord )
   {
-    FT_ASSERT( hintmap->isValid );  /* must call Build before Map */
-    FT_ASSERT( hintmap->lastIndex < CF2_MAX_HINT_EDGES );
-
     if ( hintmap->count == 0 || ! hintmap->hinted )
     {
       /* there are no hints; use uniform scale and zero offset */
@@ -317,6 +314,7 @@
       /* start linear search from last hit */
       CF2_UInt  i = hintmap->lastIndex;
 
+      FT_ASSERT( hintmap->lastIndex < CF2_MAX_HINT_EDGES );
 
       /* search up */
       while ( i < hintmap->count - 1                  &&
@@ -699,10 +697,10 @@
 
     /* make room to insert */
     {
-      CF2_Int  iSrc = hintmap->count - 1;
-      CF2_Int  iDst = isPair ? hintmap->count + 1 : hintmap->count;
+      CF2_UInt  iSrc = hintmap->count - 1;
+      CF2_UInt  iDst = isPair ? hintmap->count + 1 : hintmap->count;
 
-      CF2_Int  count = hintmap->count - indexInsert;
+      CF2_UInt  count = hintmap->count - indexInsert;
 
 
       if ( iDst >= CF2_MAX_HINT_EDGES )
@@ -781,6 +779,8 @@
       cf2_hintmask_setAll( hintMask,
                            cf2_arrstack_size( hStemHintArray ) +
                              cf2_arrstack_size( vStemHintArray ) );
+      if ( !cf2_hintmask_isValid( hintMask ) )
+          return;                   /* too many stem hints */
     }
 
     /* begin by clearing the map */
@@ -792,8 +792,11 @@
     maskPtr      = cf2_hintmask_getMaskPtr( &tempHintMask );
 
     /* use the hStem hints only, which are first in the mask */
-    /* TODO: compare this to cffhintmaskGetBitCount */
     bitCount = cf2_arrstack_size( hStemHintArray );
+
+    /* Defense-in-depth.  Should never return here. */
+    if ( bitCount > hintMask->bitCount )
+        return;
 
     /* synthetic embox hints get highest priority */
     if ( font->blues.doEmBoxHints )
@@ -1558,7 +1561,7 @@
         {
           /* -y */
           *x = -glyphpath->xOffset;
-          *y = glyphpath->xOffset;
+          *y = glyphpath->yOffset;
         }
         else
         {
@@ -1689,7 +1692,8 @@
 
     if ( glyphpath->elemIsQueued )
     {
-      FT_ASSERT( cf2_hintmap_isValid( &glyphpath->hintMap ) );
+      FT_ASSERT( cf2_hintmap_isValid( &glyphpath->hintMap ) ||
+                 glyphpath->hintMap.count == 0              );
 
       cf2_glyphpath_pushPrevElem( glyphpath,
                                   &glyphpath->hintMap,
@@ -1775,7 +1779,8 @@
 
     if ( glyphpath->elemIsQueued )
     {
-      FT_ASSERT( cf2_hintmap_isValid( &glyphpath->hintMap ) );
+      FT_ASSERT( cf2_hintmap_isValid( &glyphpath->hintMap ) ||
+                 glyphpath->hintMap.count == 0              );
 
       cf2_glyphpath_pushPrevElem( glyphpath,
                                   &glyphpath->hintMap,

@@ -7,23 +7,23 @@
 CFG=freetype - Win32 Debug Singlethreaded
 !MESSAGE This is not a valid makefile. To build this project using NMAKE,
 !MESSAGE use the Export Makefile command and run
-!MESSAGE 
+!MESSAGE
 !MESSAGE NMAKE /f "freetype.mak".
-!MESSAGE 
+!MESSAGE
 !MESSAGE You can specify a configuration when running NMAKE
 !MESSAGE by defining the macro CFG on the command line. For example:
-!MESSAGE 
+!MESSAGE
 !MESSAGE NMAKE /f "freetype.mak" CFG="freetype - Win32 Debug Singlethreaded"
-!MESSAGE 
+!MESSAGE
 !MESSAGE Possible choices for configuration are:
-!MESSAGE 
+!MESSAGE
 !MESSAGE "freetype - Win32 Release" (based on "Win32 (x86) Static Library")
 !MESSAGE "freetype - Win32 Debug" (based on "Win32 (x86) Static Library")
 !MESSAGE "freetype - Win32 Debug Multithreaded" (based on "Win32 (x86) Static Library")
 !MESSAGE "freetype - Win32 Release Multithreaded" (based on "Win32 (x86) Static Library")
 !MESSAGE "freetype - Win32 Release Singlethreaded" (based on "Win32 (x86) Static Library")
 !MESSAGE "freetype - Win32 Debug Singlethreaded" (based on "Win32 (x86) Static Library")
-!MESSAGE 
+!MESSAGE
 
 # Begin Project
 # PROP AllowPerConfigDependencies 0
@@ -54,7 +54,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LIB32=link.exe -lib
 # ADD BASE LIB32 /nologo
-# ADD LIB32 /nologo /out:"..\..\..\objs\freetype252.lib"
+# ADD LIB32 /nologo /out:"..\..\..\objs\freetype26.lib"
 
 !ELSEIF  "$(CFG)" == "freetype - Win32 Debug"
 
@@ -78,7 +78,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LIB32=link.exe -lib
 # ADD BASE LIB32 /nologo
-# ADD LIB32 /nologo /out:"..\..\..\objs\freetype252_D.lib"
+# ADD LIB32 /nologo /out:"..\..\..\objs\freetype26_D.lib"
 
 !ELSEIF  "$(CFG)" == "freetype - Win32 Debug Multithreaded"
 
@@ -102,8 +102,8 @@ BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
 LIB32=link.exe -lib
-# ADD BASE LIB32 /nologo /out:"lib\freetype252_D.lib"
-# ADD LIB32 /nologo /out:"..\..\..\objs\freetype252MT_D.lib"
+# ADD BASE LIB32 /nologo /out:"lib\freetype26_D.lib"
+# ADD LIB32 /nologo /out:"..\..\..\objs\freetype26MT_D.lib"
 
 !ELSEIF  "$(CFG)" == "freetype - Win32 Release Multithreaded"
 
@@ -126,8 +126,8 @@ BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
 LIB32=link.exe -lib
-# ADD BASE LIB32 /nologo /out:"lib\freetype252.lib"
-# ADD LIB32 /nologo /out:"..\..\..\objs\freetype252MT.lib"
+# ADD BASE LIB32 /nologo /out:"lib\freetype26.lib"
+# ADD LIB32 /nologo /out:"..\..\..\objs\freetype26MT.lib"
 
 !ELSEIF  "$(CFG)" == "freetype - Win32 Release Singlethreaded"
 
@@ -151,8 +151,8 @@ BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
 LIB32=link.exe -lib
-# ADD BASE LIB32 /nologo /out:"..\..\..\objs\freetype252.lib"
-# ADD LIB32 /out:"..\..\..\objs\freetype252ST.lib"
+# ADD BASE LIB32 /nologo /out:"..\..\..\objs\freetype26.lib"
+# ADD LIB32 /out:"..\..\..\objs\freetype26ST.lib"
 # SUBTRACT LIB32 /nologo
 
 !ELSEIF  "$(CFG)" == "freetype - Win32 Debug Singlethreaded"
@@ -177,10 +177,10 @@ BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
 LIB32=link.exe -lib
-# ADD BASE LIB32 /nologo /out:"..\..\..\objs\freetype252_D.lib"
-# ADD LIB32 /nologo /out:"..\..\..\objs\freetype252ST_D.lib"
+# ADD BASE LIB32 /nologo /out:"..\..\..\objs\freetype26_D.lib"
+# ADD LIB32 /nologo /out:"..\..\..\objs\freetype26ST_D.lib"
 
-!ENDIF 
+!ENDIF
 
 # Begin Target
 
@@ -223,6 +223,10 @@ SOURCE=..\..\..\src\base\ftbdf.c
 # Begin Source File
 
 SOURCE=..\..\..\src\base\ftbitmap.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\..\src\base\ftfntfmt.c
 # End Source File
 # Begin Source File
 
@@ -298,10 +302,6 @@ SOURCE=..\..\..\src\base\fttype1.c
 # Begin Source File
 
 SOURCE=..\..\..\src\base\ftwinfnt.c
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\src\base\ftxf86.c
 # End Source File
 # Begin Source File
 

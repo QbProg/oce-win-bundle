@@ -2,9 +2,9 @@
 /*                                                                         */
 /*  afcjk.c                                                                */
 /*                                                                         */
-/*    Auto-fitter hinting routines for CJK script (body).                  */
+/*    Auto-fitter hinting routines for CJK writing system (body).          */
 /*                                                                         */
-/*  Copyright 2006-2013 by                                                 */
+/*  Copyright 2006-2015 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -27,6 +27,7 @@
 #include FT_INTERNAL_DEBUG_H
 
 #include "afglobal.h"
+#include "afpic.h"
 #include "aflatin.h"
 
 
@@ -74,10 +75,10 @@
 
 
     FT_TRACE5(( "\n"
-                "cjk standard widths computation (script `%s')\n"
-                "===============================================\n"
+                "cjk standard widths computation (style `%s')\n"
+                "===================================================\n"
                 "\n",
-                af_script_names[metrics->root.script_class->script] ));
+                af_style_names[metrics->root.style_class->style] ));
 
     af_glyph_hints_init( hints, face->memory );
 
@@ -86,20 +87,59 @@
 
     {
       FT_Error          error;
-      FT_UInt           glyph_index;
+      FT_ULong          glyph_index;
+      FT_Long           y_offset;
       int               dim;
       AF_CJKMetricsRec  dummy[1];
       AF_Scaler         scaler = &dummy->root.scaler;
 
+#ifdef FT_CONFIG_OPTION_PIC
+      AF_FaceGlobals  globals = metrics->root.globals;
+#endif
 
-      glyph_index = FT_Get_Char_Index(
-                      face,
-                      metrics->root.script_class->standard_char );
-      if ( glyph_index == 0 )
-        goto Exit;
+      AF_StyleClass   style_class  = metrics->root.style_class;
+      AF_ScriptClass  script_class = AF_SCRIPT_CLASSES_GET
+                                       [style_class->script];
+
+      FT_UInt32  standard_char;
+
+
+      standard_char = script_class->standard_char1;
+      af_get_char_index( &metrics->root,
+                         standard_char,
+                         &glyph_index,
+                         &y_offset );
+      if ( !glyph_index )
+      {
+        if ( script_class->standard_char2 )
+        {
+          standard_char = script_class->standard_char2;
+          af_get_char_index( &metrics->root,
+                             standard_char,
+                             &glyph_index,
+                             &y_offset );
+          if ( !glyph_index )
+          {
+            if ( script_class->standard_char3 )
+            {
+              standard_char = script_class->standard_char3;
+              af_get_char_index( &metrics->root,
+                                 standard_char,
+                                 &glyph_index,
+                                 &y_offset );
+              if ( !glyph_index )
+                goto Exit;
+            }
+            else
+              goto Exit;
+          }
+        }
+        else
+          goto Exit;
+      }
 
       FT_TRACE5(( "standard character: U+%04lX (glyph index %d)\n",
-                  metrics->root.script_class->standard_char, glyph_index ));
+                  standard_char, glyph_index ));
 
       error = FT_Load_Glyph( face, glyph_index, FT_LOAD_NO_SCALE );
       if ( error || face->glyph->outline.n_points <= 0 )
@@ -118,7 +158,7 @@
       scaler->render_mode = FT_RENDER_MODE_NORMAL;
       scaler->flags       = 0;
 
-      af_glyph_hints_rescale( hints, (AF_ScriptMetrics)dummy );
+      af_glyph_hints_rescale( hints, (AF_StyleMetrics)dummy );
 
       error = af_glyph_hints_reload( hints, &face->glyph->outline );
       if ( error )
@@ -138,6 +178,8 @@
           goto Exit;
 
         af_latin_hints_link_segments( hints,
+                                      0,
+                                      NULL,
                                       (AF_Dimension)dim );
 
         seg   = axhints->segments;
@@ -218,37 +260,25 @@
     FT_Pos      fills[AF_BLUE_STRING_MAX_LEN];
     FT_Pos      flats[AF_BLUE_STRING_MAX_LEN];
 
-    FT_Int      num_fills;
-    FT_Int      num_flats;
+    FT_UInt     num_fills;
+    FT_UInt     num_flats;
+
+    FT_Bool     fill;
 
     AF_CJKBlue  blue;
     FT_Error    error;
     AF_CJKAxis  axis;
     FT_Outline  outline;
 
-    AF_Blue_Stringset         bss = metrics->root.script_class->blue_stringset;
+    AF_StyleClass  sc = metrics->root.style_class;
+
+    AF_Blue_Stringset         bss = sc->blue_stringset;
     const AF_Blue_StringRec*  bs  = &af_blue_stringsets[bss];
 
-#ifdef FT_DEBUG_LEVEL_TRACE
-    FT_String*  cjk_blue_name[4] =
-    {
-      (FT_String*)"bottom",    /* --   , --  */
-      (FT_String*)"top",       /* --   , TOP */
-      (FT_String*)"left",      /* HORIZ, --  */
-      (FT_String*)"right"      /* HORIZ, TOP */
-    };
 
-    FT_String*  cjk_blue_type_name[2] =
-    {
-      (FT_String*)"unfilled",  /* --   */
-      (FT_String*)"filled"     /* FILL */
-    };
-#endif
-
-
-    /* we walk over the blue character strings as specified in the    */
-    /* script's entry in the `af_blue_stringset' array, computing its */
-    /* extremum points (depending on the string properties)           */
+    /* we walk over the blue character strings as specified in the   */
+    /* style's entry in the `af_blue_stringset' array, computing its */
+    /* extremum points (depending on the string properties)          */
 
     FT_TRACE5(( "cjk blue zones computation\n"
                 "==========================\n"
@@ -266,20 +296,35 @@
       else
         axis = &metrics->axis[AF_DIMENSION_VERT];
 
-      FT_TRACE5(( "blue zone %d:\n", axis->blue_count ));
+#ifdef FT_DEBUG_LEVEL_TRACE
+      {
+        FT_String*  cjk_blue_name[4] =
+        {
+          (FT_String*)"bottom",    /* --   , --  */
+          (FT_String*)"top",       /* --   , TOP */
+          (FT_String*)"left",      /* HORIZ, --  */
+          (FT_String*)"right"      /* HORIZ, TOP */
+        };
+
+
+        FT_TRACE5(( "blue zone %d (%s):\n",
+                    axis->blue_count,
+                    cjk_blue_name[AF_CJK_IS_HORIZ_BLUE( bs ) |
+                                  AF_CJK_IS_TOP_BLUE( bs )   ] ));
+      }
+#endif /* FT_DEBUG_LEVEL_TRACE */
 
       num_fills = 0;
       num_flats = 0;
 
-      FT_TRACE5(( "  cjk blue %s/%s\n",
-                  cjk_blue_name[AF_CJK_IS_HORIZ_BLUE( bs ) |
-                                AF_CJK_IS_TOP_BLUE( bs )   ],
-                  cjk_blue_type_name[!!AF_CJK_IS_FILLED_BLUE( bs )] ));
+      fill = 1;  /* start with characters that define fill values */
+      FT_TRACE5(( "  [overshoot values]\n" ));
 
       while ( *p )
       {
         FT_ULong    ch;
-        FT_UInt     glyph_index;
+        FT_ULong    glyph_index;
+        FT_Long     y_offset;
         FT_Pos      best_pos;       /* same as points.y or points.x, resp. */
         FT_Int      best_point;
         FT_Vector*  points;
@@ -287,8 +332,16 @@
 
         GET_UTF8_CHAR( ch, p );
 
+        /* switch to characters that define flat values */
+        if ( ch == '|' )
+        {
+          fill = 0;
+          FT_TRACE5(( "  [reference values]\n" ));
+          continue;
+        }
+
         /* load the character in the face -- skip unknown or empty ones */
-        glyph_index = FT_Get_Char_Index( face, ch );
+        af_get_char_index( &metrics->root, ch, &glyph_index, &y_offset );
         if ( glyph_index == 0 )
         {
           FT_TRACE5(( "  U+%04lX unavailable\n", ch ));
@@ -374,7 +427,7 @@
           FT_TRACE5(( "  U+%04lX: best_pos = %5ld\n", ch, best_pos ));
         }
 
-        if ( AF_CJK_IS_FILLED_BLUE( bs ) )
+        if ( fill )
           fills[num_fills++] = best_pos;
         else
           flats[num_flats++] = best_pos;
@@ -386,15 +439,15 @@
          *  we couldn't find a single glyph to compute this blue zone,
          *  we will simply ignore it then
          */
-        FT_TRACE5(( "    empty\n" ));
+        FT_TRACE5(( "  empty\n" ));
         continue;
       }
 
-      /* we have computed the contents of the `fill' and `flats' tables, */
-      /* now determine the reference position of the blue zone --        */
-      /* we simply take the median value after a simple sort             */
-      af_sort_pos( num_flats, flats );
+      /* we have computed the contents of the `fill' and `flats' tables,   */
+      /* now determine the reference and overshoot position of the blue -- */
+      /* we simply take the median value after a simple sort               */
       af_sort_pos( num_fills, fills );
+      af_sort_pos( num_flats, flats );
 
       blue       = &axis->blues[axis->blue_count];
       blue_ref   = &blue->ref.org;
@@ -433,7 +486,7 @@
           *blue_ref   =
           *blue_shoot = ( shoot + ref ) / 2;
 
-          FT_TRACE5(( "  [overshoot smaller than reference,"
+          FT_TRACE5(( "  [reference smaller than overshoot,"
                       " taking mean value]\n" ));
         }
       }
@@ -467,10 +520,11 @@
     /* digit `0' is 0x30 in all supported charmaps */
     for ( i = 0x30; i <= 0x39; i++ )
     {
-      FT_UInt  glyph_index;
+      FT_ULong  glyph_index;
+      FT_Long   y_offset;
 
 
-      glyph_index = FT_Get_Char_Index( face, i );
+      af_get_char_index( &metrics->root, i, &glyph_index, &y_offset );
       if ( glyph_index == 0 )
         continue;
 
@@ -666,8 +720,8 @@
     {
       AF_Point  pt   = seg->first;
       AF_Point  last = seg->last;
-      AF_Flags  f0   = (AF_Flags)( pt->flags & AF_FLAG_CONTROL );
-      AF_Flags  f1;
+      FT_UInt   f0   = pt->flags & AF_FLAG_CONTROL;
+      FT_UInt   f1;
 
 
       seg->flags &= ~AF_EDGE_ROUND;
@@ -675,7 +729,7 @@
       for ( ; pt != last; f0 = f1 )
       {
         pt = pt->next;
-        f1 = (AF_Flags)( pt->flags & AF_FLAG_CONTROL );
+        f1 = pt->flags & AF_FLAG_CONTROL;
 
         if ( !f0 && !f1 )
           break;
@@ -711,10 +765,6 @@
     /* now compare each segment to the others */
     for ( seg1 = segments; seg1 < segment_limit; seg1++ )
     {
-      /* the fake segments are for metrics hinting only */
-      if ( seg1->first == seg1->last )
-        continue;
-
       if ( seg1->dir != major_dir )
         continue;
 
@@ -813,19 +863,19 @@
 
               if ( link == seg2 )
               {
-                seg->link  = 0;
+                seg->link  = NULL;
                 seg->serif = link1;
               }
               else if ( link == link2 )
               {
-                seg->link  = 0;
+                seg->link  = NULL;
                 seg->serif = seg1;
               }
             }
           }
           else
           {
-            seg1->link = link1->link = 0;
+            seg1->link = link1->link = NULL;
 
             break;
           }
@@ -842,7 +892,7 @@
         seg2->num_linked++;
         if ( seg2->link != seg1 )
         {
-          seg1->link = 0;
+          seg1->link = NULL;
 
           if ( seg2->score < dist_threshold || seg1->score < seg2->score * 4 )
             seg1->serif = seg2->link;
@@ -974,10 +1024,11 @@
 
         edge->first    = seg;
         edge->last     = seg;
-        edge->fpos     = seg->pos;
-        edge->opos     = edge->pos = FT_MulFix( seg->pos, scale );
-        seg->edge_next = seg;
         edge->dir      = seg->dir;
+        edge->fpos     = seg->pos;
+        edge->opos     = FT_MulFix( seg->pos, scale );
+        edge->pos      = edge->opos;
+        seg->edge_next = seg;
       }
       else
       {
@@ -1108,7 +1159,7 @@
         /*      Example: the `c' in cour.pfa at size 13     */
 
         if ( edge->serif && edge->link )
-          edge->serif = 0;
+          edge->serif = NULL;
       }
     }
 
@@ -1139,7 +1190,7 @@
 
   /* Compute all edges which lie within blue zones. */
 
-  FT_LOCAL_DEF( void )
+  static void
   af_cjk_hints_compute_blue_edges( AF_GlyphHints  hints,
                                    AF_CJKMetrics  metrics,
                                    AF_Dimension   dim )
@@ -1186,8 +1237,10 @@
         /* zone, check for left edges                                      */
         /*                                                                 */
         /* of course, that's for TrueType                                  */
-        is_top_right_blue = FT_BOOL( blue->flags & AF_CJK_BLUE_TOP );
-        is_major_dir      = FT_BOOL( edge->dir == axis->major_dir );
+        is_top_right_blue =
+          (FT_Byte)( ( blue->flags & AF_CJK_BLUE_TOP ) != 0 );
+        is_major_dir =
+          FT_BOOL( edge->dir == axis->major_dir );
 
         /* if it is a top zone, the edge must be against the major    */
         /* direction; if it is a bottom zone, it must be in the major */
@@ -1234,7 +1287,7 @@
     FT_UInt32       scaler_flags, other_flags;
 
 
-    af_glyph_hints_rescale( hints, (AF_ScriptMetrics)metrics );
+    af_glyph_hints_rescale( hints, (AF_StyleMetrics)metrics );
 
     /*
      *  correct x_scale and y_scale when needed, since they may have
@@ -1248,7 +1301,7 @@
     /* compute flags depending on render mode, etc. */
     mode = metrics->root.scaler.render_mode;
 
-#ifdef AF_CONFIG_OPTION_USE_WARPER
+#if 0 /* AF_CONFIG_OPTION_USE_WARPER */
     if ( mode == FT_RENDER_MODE_LCD || mode == FT_RENDER_MODE_LCD_V )
       metrics->root.scaler.render_mode = mode = FT_RENDER_MODE_NORMAL;
 #endif
@@ -1281,6 +1334,12 @@
 
     scaler_flags |= AF_SCALER_FLAG_NO_ADVANCE;
 
+#ifdef AF_CONFIG_OPTION_USE_WARPER
+    /* get (global) warper flag */
+    if ( !metrics->root.globals->module->warping )
+      scaler_flags |= AF_SCALER_FLAG_NO_WARPER;
+#endif
+
     hints->scaler_flags = scaler_flags;
     hints->other_flags  = other_flags;
 
@@ -1301,13 +1360,13 @@
 
   static FT_Pos
   af_cjk_snap_width( AF_Width  widths,
-                     FT_Int    count,
+                     FT_UInt   count,
                      FT_Pos    width )
   {
-    int     n;
-    FT_Pos  best      = 64 + 32 + 2;
-    FT_Pos  reference = width;
-    FT_Pos  scaled;
+    FT_UInt  n;
+    FT_Pos   best      = 64 + 32 + 2;
+    FT_Pos   reference = width;
+    FT_Pos   scaled;
 
 
     for ( n = 0; n < count; n++ )
@@ -1352,8 +1411,8 @@
   af_cjk_compute_stem_width( AF_GlyphHints  hints,
                              AF_Dimension   dim,
                              FT_Pos         width,
-                             AF_Edge_Flags  base_flags,
-                             AF_Edge_Flags  stem_flags )
+                             FT_UInt        base_flags,
+                             FT_UInt        stem_flags )
   {
     AF_CJKMetrics  metrics  = (AF_CJKMetrics)hints->metrics;
     AF_CJKAxis     axis     = &metrics->axis[dim];
@@ -1477,13 +1536,18 @@
   {
     FT_Pos  dist = stem_edge->opos - base_edge->opos;
 
-    FT_Pos  fitted_width = af_cjk_compute_stem_width(
-                             hints, dim, dist,
-                             (AF_Edge_Flags)base_edge->flags,
-                             (AF_Edge_Flags)stem_edge->flags );
+    FT_Pos  fitted_width = af_cjk_compute_stem_width( hints, dim, dist,
+                                                      base_edge->flags,
+                                                      stem_edge->flags );
 
 
     stem_edge->pos = base_edge->pos + fitted_width;
+
+    FT_TRACE5(( "  CJKLINK: edge %d @%d (opos=%.2f) linked to %.2f,"
+                " dist was %.2f, now %.2f\n",
+                stem_edge - hints->axis[dim].edges, stem_edge->fpos,
+                stem_edge->opos / 64.0, stem_edge->pos / 64.0,
+                dist / 64.0, fitted_width / 64.0 ));
   }
 
 
@@ -1552,8 +1616,8 @@
 
     org_len    = edge2->opos - edge->opos;
     cur_len    = af_cjk_compute_stem_width( hints, dim, org_len,
-                                            (AF_Edge_Flags)edge->flags,
-                                            (AF_Edge_Flags)edge2->flags );
+                                            edge->flags,
+                                            edge2->flags );
 
     org_center = ( edge->opos + edge2->opos ) / 2 + anchor;
     cur_pos1   = org_center - cur_len / 2;
@@ -1654,7 +1718,7 @@
     AF_Edge       edge_limit = edges + axis->num_edges;
     FT_PtrDist    n_edges;
     AF_Edge       edge;
-    AF_Edge       anchor   = 0;
+    AF_Edge       anchor   = NULL;
     FT_Pos        delta    = 0;
     FT_Int        skipped  = 0;
     FT_Bool       has_last_stem = FALSE;
@@ -1665,9 +1729,9 @@
 #endif
 
 
-    FT_TRACE5(( "cjk %s edge hinting (script `%s')\n",
+    FT_TRACE5(( "cjk %s edge hinting (style `%s')\n",
                 dim == AF_DIMENSION_VERT ? "horizontal" : "vertical",
-                af_script_names[hints->metrics->script_class->script] ));
+                af_style_names[hints->metrics->style_class->style] ));
 
     /* we begin by aligning all stems relative to the blue zone */
 
@@ -2132,7 +2196,13 @@
       goto Exit;
 
     /* analyze glyph outline */
+#ifdef AF_CONFIG_OPTION_USE_WARPER
+    if ( ( metrics->root.scaler.render_mode == FT_RENDER_MODE_LIGHT &&
+           AF_HINTS_DO_WARP( hints )                                ) ||
+         AF_HINTS_DO_HORIZONTAL( hints )                              )
+#else
     if ( AF_HINTS_DO_HORIZONTAL( hints ) )
+#endif
     {
       error = af_cjk_hints_detect_features( hints, AF_DIMENSION_HORZ );
       if ( error )
@@ -2158,8 +2228,9 @@
       {
 
 #ifdef AF_CONFIG_OPTION_USE_WARPER
-        if ( dim == AF_DIMENSION_HORZ                                  &&
-             metrics->root.scaler.render_mode == FT_RENDER_MODE_NORMAL )
+        if ( dim == AF_DIMENSION_HORZ                                 &&
+             metrics->root.scaler.render_mode == FT_RENDER_MODE_LIGHT &&
+             AF_HINTS_DO_WARP( hints )                                )
         {
           AF_WarperRec  warper;
           FT_Fixed      scale;
@@ -2180,12 +2251,6 @@
         af_glyph_hints_align_weak_points( hints, (AF_Dimension)dim );
       }
     }
-
-#if 0
-    af_glyph_hints_dump_points( hints );
-    af_glyph_hints_dump_segments( hints );
-    af_glyph_hints_dump_edges( hints );
-#endif
 
     af_glyph_hints_save( hints, outline );
 
@@ -2210,59 +2275,17 @@
 
     sizeof ( AF_CJKMetricsRec ),
 
-    (AF_Script_InitMetricsFunc) af_cjk_metrics_init,
-    (AF_Script_ScaleMetricsFunc)af_cjk_metrics_scale,
-    (AF_Script_DoneMetricsFunc) NULL,
+    (AF_WritingSystem_InitMetricsFunc) af_cjk_metrics_init,
+    (AF_WritingSystem_ScaleMetricsFunc)af_cjk_metrics_scale,
+    (AF_WritingSystem_DoneMetricsFunc) NULL,
 
-    (AF_Script_InitHintsFunc)   af_cjk_hints_init,
-    (AF_Script_ApplyHintsFunc)  af_cjk_hints_apply
+    (AF_WritingSystem_InitHintsFunc)   af_cjk_hints_init,
+    (AF_WritingSystem_ApplyHintsFunc)  af_cjk_hints_apply
   )
 
 
-  /* this corresponds to Unicode 6.0 */
-
-  /* XXX: this should probably fine tuned to differentiate better between */
-  /*      scripts...                                                      */
-
-  static const AF_Script_UniRangeRec  af_hani_uniranges[] =
-  {
-    AF_UNIRANGE_REC(  0x1100UL,  0x11FFUL ),  /* Hangul Jamo                             */
-    AF_UNIRANGE_REC(  0x2E80UL,  0x2EFFUL ),  /* CJK Radicals Supplement                 */
-    AF_UNIRANGE_REC(  0x2F00UL,  0x2FDFUL ),  /* Kangxi Radicals                         */
-    AF_UNIRANGE_REC(  0x2FF0UL,  0x2FFFUL ),  /* Ideographic Description Characters      */
-    AF_UNIRANGE_REC(  0x3000UL,  0x303FUL ),  /* CJK Symbols and Punctuation             */
-    AF_UNIRANGE_REC(  0x3040UL,  0x309FUL ),  /* Hiragana                                */
-    AF_UNIRANGE_REC(  0x30A0UL,  0x30FFUL ),  /* Katakana                                */
-    AF_UNIRANGE_REC(  0x3100UL,  0x312FUL ),  /* Bopomofo                                */
-    AF_UNIRANGE_REC(  0x3130UL,  0x318FUL ),  /* Hangul Compatibility Jamo               */
-    AF_UNIRANGE_REC(  0x3190UL,  0x319FUL ),  /* Kanbun                                  */
-    AF_UNIRANGE_REC(  0x31A0UL,  0x31BFUL ),  /* Bopomofo Extended                       */
-    AF_UNIRANGE_REC(  0x31C0UL,  0x31EFUL ),  /* CJK Strokes                             */
-    AF_UNIRANGE_REC(  0x31F0UL,  0x31FFUL ),  /* Katakana Phonetic Extensions            */
-    AF_UNIRANGE_REC(  0x3200UL,  0x32FFUL ),  /* Enclosed CJK Letters and Months         */
-    AF_UNIRANGE_REC(  0x3300UL,  0x33FFUL ),  /* CJK Compatibility                       */
-    AF_UNIRANGE_REC(  0x3400UL,  0x4DBFUL ),  /* CJK Unified Ideographs Extension A      */
-    AF_UNIRANGE_REC(  0x4DC0UL,  0x4DFFUL ),  /* Yijing Hexagram Symbols                 */
-    AF_UNIRANGE_REC(  0x4E00UL,  0x9FFFUL ),  /* CJK Unified Ideographs                  */
-    AF_UNIRANGE_REC(  0xA960UL,  0xA97FUL ),  /* Hangul Jamo Extended-A                  */
-    AF_UNIRANGE_REC(  0xAC00UL,  0xD7AFUL ),  /* Hangul Syllables                        */
-    AF_UNIRANGE_REC(  0xD7B0UL,  0xD7FFUL ),  /* Hangul Jamo Extended-B                  */
-    AF_UNIRANGE_REC(  0xF900UL,  0xFAFFUL ),  /* CJK Compatibility Ideographs            */
-    AF_UNIRANGE_REC(  0xFE10UL,  0xFE1FUL ),  /* Vertical forms                          */
-    AF_UNIRANGE_REC(  0xFE30UL,  0xFE4FUL ),  /* CJK Compatibility Forms                 */
-    AF_UNIRANGE_REC(  0xFF00UL,  0xFFEFUL ),  /* Halfwidth and Fullwidth Forms           */
-    AF_UNIRANGE_REC( 0x1B000UL, 0x1B0FFUL ),  /* Kana Supplement                         */
-    AF_UNIRANGE_REC( 0x1D300UL, 0x1D35FUL ),  /* Tai Xuan Hing Symbols                   */
-    AF_UNIRANGE_REC( 0x1F200UL, 0x1F2FFUL ),  /* Enclosed Ideographic Supplement         */
-    AF_UNIRANGE_REC( 0x20000UL, 0x2A6DFUL ),  /* CJK Unified Ideographs Extension B      */
-    AF_UNIRANGE_REC( 0x2A700UL, 0x2B73FUL ),  /* CJK Unified Ideographs Extension C      */
-    AF_UNIRANGE_REC( 0x2B740UL, 0x2B81FUL ),  /* CJK Unified Ideographs Extension D      */
-    AF_UNIRANGE_REC( 0x2F800UL, 0x2FA1FUL ),  /* CJK Compatibility Ideographs Supplement */
-    AF_UNIRANGE_REC(       0UL,       0UL )
-  };
-
-
 #else /* !AF_CONFIG_OPTION_CJK */
+
 
   AF_DEFINE_WRITING_SYSTEM_CLASS(
     af_cjk_writing_system_class,
@@ -2271,33 +2294,16 @@
 
     sizeof ( AF_CJKMetricsRec ),
 
-    (AF_Script_InitMetricsFunc) NULL,
-    (AF_Script_ScaleMetricsFunc)NULL,
-    (AF_Script_DoneMetricsFunc) NULL,
+    (AF_WritingSystem_InitMetricsFunc) NULL,
+    (AF_WritingSystem_ScaleMetricsFunc)NULL,
+    (AF_WritingSystem_DoneMetricsFunc) NULL,
 
-    (AF_Script_InitHintsFunc)   NULL,
-    (AF_Script_ApplyHintsFunc)  NULL
+    (AF_WritingSystem_InitHintsFunc)   NULL,
+    (AF_WritingSystem_ApplyHintsFunc)  NULL
   )
 
-
-  static const AF_Script_UniRangeRec  af_hani_uniranges[] =
-  {
-    AF_UNIRANGE_REC( 0UL, 0UL )
-  };
 
 #endif /* !AF_CONFIG_OPTION_CJK */
-
-
-  AF_DEFINE_SCRIPT_CLASS(
-    af_hani_script_class,
-
-    AF_SCRIPT_HANI,
-    AF_BLUE_STRINGSET_HANI,
-    AF_WRITING_SYSTEM_CJK,
-
-    af_hani_uniranges,
-    0x7530 /* 田 */
-  )
 
 
 /* END */

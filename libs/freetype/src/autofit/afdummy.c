@@ -5,7 +5,7 @@
 /*    Auto-fitter dummy routines to be used if no hinting should be        */
 /*    performed (body).                                                    */
 /*                                                                         */
-/*  Copyright 2003-2005, 2011, 2013 by                                     */
+/*  Copyright 2003-2015 by                                                 */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -23,8 +23,8 @@
 
 
   static FT_Error
-  af_dummy_hints_init( AF_GlyphHints     hints,
-                       AF_ScriptMetrics  metrics )
+  af_dummy_hints_init( AF_GlyphHints    hints,
+                       AF_StyleMetrics  metrics )
   {
     af_glyph_hints_rescale( hints, metrics );
 
@@ -57,26 +57,14 @@
 
     AF_WRITING_SYSTEM_DUMMY,
 
-    sizeof ( AF_ScriptMetricsRec ),
+    sizeof ( AF_StyleMetricsRec ),
 
-    (AF_Script_InitMetricsFunc) NULL,
-    (AF_Script_ScaleMetricsFunc)NULL,
-    (AF_Script_DoneMetricsFunc) NULL,
+    (AF_WritingSystem_InitMetricsFunc) NULL,
+    (AF_WritingSystem_ScaleMetricsFunc)NULL,
+    (AF_WritingSystem_DoneMetricsFunc) NULL,
 
-    (AF_Script_InitHintsFunc)   af_dummy_hints_init,
-    (AF_Script_ApplyHintsFunc)  af_dummy_hints_apply
-  )
-
-
-  AF_DEFINE_SCRIPT_CLASS(
-    af_dflt_script_class,
-
-    AF_SCRIPT_DFLT,
-    (AF_Blue_Stringset)0,
-    AF_WRITING_SYSTEM_DUMMY,
-
-    NULL,
-    '\0'
+    (AF_WritingSystem_InitHintsFunc)   af_dummy_hints_init,
+    (AF_WritingSystem_ApplyHintsFunc)  af_dummy_hints_apply
   )
 
 
