@@ -1,6 +1,12 @@
 cmake_minimum_required(VERSION 2.6)
 PROJECT(oce-win-bundle)
 
+# Policy CMP0043 introduced in cmake version 3.0 IGNORES the use of COMPILE_DEFINITIONS suffixed variables, e.g. COMPILE_DEFINITIONS_DEBUG
+# Set to OLD behavior until minimum cmake version >= 2.8.10 (version that COMPILE_DEFINITIONS can be set by generator expressions instead)
+if (POLICY CMP0043)
+	cmake_policy(SET CMP0043 OLD)
+endif (POLICY CMP0043)
+
 REMOVE_DEFINITIONS("-DHAVE_CONFIG_H")
 IF(MSVC)
     SET(CMAKE_DEBUG_POSTFIX "d")

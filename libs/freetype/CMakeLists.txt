@@ -102,6 +102,10 @@ set(VERSION_MINOR "6")
 set(VERSION_PATCH "0")
 set(PROJECT_VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
 
+if (POLICY CMP0043)
+	cmake_policy(SET CMP0043 OLD)
+endif (POLICY CMP0043)
+
 # Compiler definitions for building the library
 add_definitions(-DFT2_BUILD_LIBRARY)
 
