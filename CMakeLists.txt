@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 2.6)
 PROJECT(oce-win-bundle)
 
+REMOVE_DEFINITIONS("-DHAVE_CONFIG_H")
 IF(MSVC)
     SET(CMAKE_DEBUG_POSTFIX "d")
 ENDIF(MSVC)
