@@ -97,6 +97,10 @@ if (BUILD_FRAMEWORK)
   set(BUILD_SHARED_LIBS ON)
 endif ()
 
+IF(OCE_BUILD_SHARED_LIB)
+  SET(BUILD_SHARED_LIBS ON)
+ENDIF()
+
 set(VERSION_MAJOR "2")
 set(VERSION_MINOR "6")
 set(VERSION_PATCH "0")
@@ -182,6 +186,7 @@ set(BASE_SRCS
   src/type1/type1.c
   src/type42/type42.c
   src/winfonts/winfnt.c
+  freetype.def
 )
 
 include_directories("src/truetype")
@@ -206,7 +211,8 @@ add_library(freetype
   ${BASE_SRCS}
 )
 
-if(false)
+if(0)
+
 if (BUILD_FRAMEWORK)
   set_property(SOURCE ${PUBLIC_CONFIG_HEADERS}
     PROPERTY MACOSX_PACKAGE_LOCATION Headers/config
@@ -254,5 +260,6 @@ include(CPack)
 
 # add make dist target
 add_custom_target(dist COMMAND ${CMAKE_MAKE_PROGRAM} package_source)
+
 endif()
 # eof
