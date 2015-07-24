@@ -6,6 +6,9 @@ if(OCE_WITH_FREEIMAGE)
 endif()
 
 if (OCE_VISUALISATION)
-    add_dependencies( TKOpenGl freetype gl2ps )
+    add_dependencies( TKOpenGl freetype )
+    if (OCE_WITH_GL2PS)
+          add_dependencies( TKOpenGl gl2ps )
+    endif()
 endif()
 
