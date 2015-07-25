@@ -186,8 +186,11 @@ set(BASE_SRCS
   src/type1/type1.c
   src/type42/type42.c
   src/winfonts/winfnt.c
-  freetype.def
 )
+
+if(MSVC)
+  LIST(APPEND BASE_SRCS "freetype.def")
+endif()
 
 include_directories("src/truetype")
 include_directories("src/sfnt")
