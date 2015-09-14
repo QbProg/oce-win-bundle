@@ -20,7 +20,7 @@
 extern "C" {
 #endif
 
-#define WEBP_ENCODER_ABI_VERSION 0x0206    // MAJOR(8b) + MINOR(8b)
+#define WEBP_ENCODER_ABI_VERSION 0x0208    // MAJOR(8b) + MINOR(8b)
 
 // Note: forward declaring enumerations is not allowed in (strict) C and C++,
 // the types are left here for reference.
@@ -42,7 +42,7 @@ WEBP_EXTERN(int) WebPGetEncoderVersion(void);
 
 // Returns the size of the compressed data (pointed to by *output), or 0 if
 // an error occurred. The compressed data must be released by the caller
-// using the call 'free(*output)'.
+// using the call 'WebPFree(*output)'.
 // These functions compress using the lossy format, and the quality_factor
 // can go from 0 (smaller output, lower quality) to 100 (best quality,
 // larger output).
@@ -74,6 +74,9 @@ WEBP_EXTERN(size_t) WebPEncodeLosslessRGBA(const uint8_t* rgba,
 WEBP_EXTERN(size_t) WebPEncodeLosslessBGRA(const uint8_t* bgra,
                                            int width, int height, int stride,
                                            uint8_t** output);
+
+// Releases memory returned by the WebPEncode*() functions above.
+WEBP_EXTERN(void) WebPFree(void* ptr);
 
 //------------------------------------------------------------------------------
 // Coding parameters
@@ -376,8 +379,8 @@ WEBP_EXTERN(void) WebPPictureFree(WebPPicture* picture);
 // Returns false in case of memory allocation error.
 WEBP_EXTERN(int) WebPPictureCopy(const WebPPicture* src, WebPPicture* dst);
 
-// Compute PSNR, SSIM or LSIM distortion metric between two pictures.
-// Result is in dB, stores in result[] in the Y/U/V/Alpha/All order.
+// Compute PSNR, SSIM or LSIM distortion metric between two pictures. Results
+// are in dB, stored in result[] in the Y/U/V/Alpha/All or B/G/R/A/All order.
 // Returns false in case of error (src and ref don't have same dimension, ...)
 // Warning: this function is rather CPU-intensive.
 WEBP_EXTERN(int) WebPPictureDistortion(

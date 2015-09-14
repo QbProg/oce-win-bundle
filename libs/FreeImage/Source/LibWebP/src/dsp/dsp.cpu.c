@@ -13,7 +13,7 @@
 
 #include "./dsp.h"
 
-#if defined(__ANDROID__)
+#if defined(WEBP_ANDROID_NEON)
 #include <cpu-features.h>
 #endif
 
@@ -79,13 +79,25 @@ static WEBP_INLINE uint64_t xgetbv(void) {
 
 #if defined(__i386__) || defined(__x86_64__) || defined(WEBP_MSC_SSE2)
 static int x86CPUInfo(CPUFeature feature) {
+  int max_cpuid_value;
   int cpu_info[4];
+
+  // get the highest feature value cpuid supports
+  GetCPUInfo(cpu_info, 0);
+  max_cpuid_value = cpu_info[0];
+  if (max_cpuid_value < 1) {
+    return 0;
+  }
+
   GetCPUInfo(cpu_info, 1);
   if (feature == kSSE2) {
     return 0 != (cpu_info[3] & 0x04000000);
   }
   if (feature == kSSE3) {
     return 0 != (cpu_info[2] & 0x00000001);
+  }
+  if (feature == kSSE4_1) {
+    return 0 != (cpu_info[2] & 0x00080000);
   }
   if (feature == kAVX) {
     // bits 27 (OSXSAVE) & 28 (256-bit AVX)
@@ -95,7 +107,7 @@ static int x86CPUInfo(CPUFeature feature) {
     }
   }
   if (feature == kAVX2) {
-    if (x86CPUInfo(kAVX)) {
+    if (x86CPUInfo(kAVX) && max_cpuid_value >= 7) {
       GetCPUInfo(cpu_info, 7);
       return ((cpu_info[1] & 0x00000020) == 0x00000020);
     }

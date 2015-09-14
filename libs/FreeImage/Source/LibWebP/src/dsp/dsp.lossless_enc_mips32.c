@@ -1,4 +1,4 @@
-// Copyright 2014 Google Inc. All Rights Reserved.
+// Copyright 2015 Google Inc. All Rights Reserved.
 //
 // Use of this source code is governed by a BSD-style license
 // that can be found in the COPYING file in the root of the source
@@ -245,29 +245,22 @@ static VP8LStreaks HuffmanCostCombinedCount(const uint32_t* X,
                                             const uint32_t* Y, int length) {
   int i;
   int streak = 0;
+  uint32_t xy_prev = 0xffffffff;
   VP8LStreaks stats;
   int* const pstreaks = &stats.streaks[0][0];
   int* const pcnts = &stats.counts[0];
   int temp0, temp1, temp2, temp3;
   memset(&stats, 0, sizeof(stats));
-  for (i = 0; i < length - 1; ++i) {
+  for (i = 0; i < length; ++i) {
     const uint32_t xy = X[i] + Y[i];
-    const uint32_t xy_next = X[i + 1] + Y[i + 1];
     ++streak;
-    if (xy == xy_next) {
-      continue;
+    if (xy != xy_prev) {
+      temp0 = (xy != 0);
+      HUFFMAN_COST_PASS
+      streak = 0;
+      xy_prev = xy;
     }
-    temp0 = (xy != 0);
-    HUFFMAN_COST_PASS
-    streak = 0;
   }
-  {
-    const uint32_t xy = X[i] + Y[i];
-    ++streak;
-    temp0 = (xy != 0);
-    HUFFMAN_COST_PASS
-  }
-
   return stats;
 }
 
@@ -285,28 +278,28 @@ static VP8LStreaks HuffmanCostCombinedCount(const uint32_t* X,
 // literal_ and successive histograms could be unaligned
 // so we must use ulw and usw
 #define ADD_TO_OUT(A, B, C, D, E, P0, P1, P2)           \
-    "ulw    %[temp0], "#A"(%["#P0"])        \n\t"       \
-    "ulw    %[temp1], "#B"(%["#P0"])        \n\t"       \
-    "ulw    %[temp2], "#C"(%["#P0"])        \n\t"       \
-    "ulw    %[temp3], "#D"(%["#P0"])        \n\t"       \
-    "ulw    %[temp4], "#A"(%["#P1"])        \n\t"       \
-    "ulw    %[temp5], "#B"(%["#P1"])        \n\t"       \
-    "ulw    %[temp6], "#C"(%["#P1"])        \n\t"       \
-    "ulw    %[temp7], "#D"(%["#P1"])        \n\t"       \
+    "ulw    %[temp0], " #A "(%[" #P0 "])    \n\t"       \
+    "ulw    %[temp1], " #B "(%[" #P0 "])    \n\t"       \
+    "ulw    %[temp2], " #C "(%[" #P0 "])    \n\t"       \
+    "ulw    %[temp3], " #D "(%[" #P0 "])    \n\t"       \
+    "ulw    %[temp4], " #A "(%[" #P1 "])    \n\t"       \
+    "ulw    %[temp5], " #B "(%[" #P1 "])    \n\t"       \
+    "ulw    %[temp6], " #C "(%[" #P1 "])    \n\t"       \
+    "ulw    %[temp7], " #D "(%[" #P1 "])    \n\t"       \
     "addu   %[temp4], %[temp4],   %[temp0]  \n\t"       \
     "addu   %[temp5], %[temp5],   %[temp1]  \n\t"       \
     "addu   %[temp6], %[temp6],   %[temp2]  \n\t"       \
     "addu   %[temp7], %[temp7],   %[temp3]  \n\t"       \
-    "addiu  %["#P0"],  %["#P0"],  16        \n\t"       \
-  ".if "#E" == 1                            \n\t"       \
-    "addiu  %["#P1"],  %["#P1"],  16        \n\t"       \
+    "addiu  %[" #P0 "],  %[" #P0 "],  16    \n\t"       \
+  ".if " #E " == 1                          \n\t"       \
+    "addiu  %[" #P1 "],  %[" #P1 "],  16    \n\t"       \
   ".endif                                   \n\t"       \
-    "usw    %[temp4], "#A"(%["#P2"])        \n\t"       \
-    "usw    %[temp5], "#B"(%["#P2"])        \n\t"       \
-    "usw    %[temp6], "#C"(%["#P2"])        \n\t"       \
-    "usw    %[temp7], "#D"(%["#P2"])        \n\t"       \
-    "addiu  %["#P2"], %["#P2"],   16        \n\t"       \
-    "bne    %["#P0"], %[LoopEnd], 1b        \n\t"       \
+    "usw    %[temp4], " #A "(%[" #P2 "])    \n\t"       \
+    "usw    %[temp5], " #B "(%[" #P2 "])    \n\t"       \
+    "usw    %[temp6], " #C "(%[" #P2 "])    \n\t"       \
+    "usw    %[temp7], " #D "(%[" #P2 "])    \n\t"       \
+    "addiu  %[" #P2 "], %[" #P2 "],   16    \n\t"       \
+    "bne    %[" #P0 "], %[LoopEnd], 1b      \n\t"       \
     ".set   pop                             \n\t"       \
 
 #define ASM_END_COMMON_0                                \
@@ -396,15 +389,12 @@ static void HistogramAdd(const VP8LHistogram* const a,
 #undef ADD_TO_OUT
 #undef ASM_START
 
-#endif  // WEBP_USE_MIPS32
-
 //------------------------------------------------------------------------------
 // Entry point
 
-extern void VP8LDspInitMIPS32(void);
+extern void VP8LEncDspInitMIPS32(void);
 
-WEBP_TSAN_IGNORE_FUNCTION void VP8LDspInitMIPS32(void) {
-#if defined(WEBP_USE_MIPS32)
+WEBP_TSAN_IGNORE_FUNCTION void VP8LEncDspInitMIPS32(void) {
   VP8LFastSLog2Slow = FastSLog2Slow;
   VP8LFastLog2Slow = FastLog2Slow;
   VP8LExtraCost = ExtraCost;
@@ -412,5 +402,10 @@ WEBP_TSAN_IGNORE_FUNCTION void VP8LDspInitMIPS32(void) {
   VP8LHuffmanCostCount = HuffmanCostCount;
   VP8LHuffmanCostCombinedCount = HuffmanCostCombinedCount;
   VP8LHistogramAdd = HistogramAdd;
-#endif  // WEBP_USE_MIPS32
 }
+
+#else  // !WEBP_USE_MIPS32
+
+WEBP_DSP_INIT_STUB(VP8LEncDspInitMIPS32)
+
+#endif  // WEBP_USE_MIPS32

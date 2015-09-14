@@ -24,24 +24,21 @@
 
 static void SetResidualCoeffsSSE2(const int16_t* const coeffs,
                                   VP8Residual* const res) {
-  const __m128i c0 = _mm_loadu_si128((const __m128i*)coeffs);
+  const __m128i c0 = _mm_loadu_si128((const __m128i*)(coeffs + 0));
   const __m128i c1 = _mm_loadu_si128((const __m128i*)(coeffs + 8));
-  // Use SSE to compare 8 values with a single instruction.
+  // Use SSE2 to compare 16 values with a single instruction.
   const __m128i zero = _mm_setzero_si128();
-  const __m128i m0 = _mm_cmpeq_epi16(c0, zero);
-  const __m128i m1 = _mm_cmpeq_epi16(c1, zero);
-  // Get the comparison results as a bitmask, consisting of two times 16 bits:
-  // two identical bits for each result. Concatenate both bitmasks to get a
-  // single 32 bit value. Negate the mask to get the position of entries that
-  // are not equal to zero. We don't need to mask out least significant bits
-  // according to res->first, since coeffs[0] is 0 if res->first > 0
-  const uint32_t mask =
-      ~(((uint32_t)_mm_movemask_epi8(m1) << 16) | _mm_movemask_epi8(m0));
+  const __m128i m0 = _mm_packs_epi16(c0, c1);
+  const __m128i m1 = _mm_cmpeq_epi8(m0, zero);
+  // Get the comparison results as a bitmask into 16bits. Negate the mask to get
+  // the position of entries that are not equal to zero. We don't need to mask
+  // out least significant bits according to res->first, since coeffs[0] is 0
+  // if res->first > 0.
+  const uint32_t mask = 0x0000ffffu ^ (uint32_t)_mm_movemask_epi8(m1);
   // The position of the most significant non-zero bit indicates the position of
-  // the last non-zero value. Divide the result by two because __movemask_epi8
-  // operates on 8 bit values instead of 16 bit values.
+  // the last non-zero value.
   assert(res->first == 0 || coeffs[0] == 0);
-  res->last = mask ? (BitsLog2Floor(mask) >> 1) : -1;
+  res->last = mask ? BitsLog2Floor(mask) : -1;
   res->coeffs = coeffs;
 }
 
@@ -68,12 +65,10 @@ static int GetResidualCostSSE2(int ctx0, const VP8Residual* const res) {
     const __m128i kCst67 = _mm_set1_epi8(MAX_VARIABLE_LEVEL);
     const __m128i c0 = _mm_loadu_si128((const __m128i*)&res->coeffs[0]);
     const __m128i c1 = _mm_loadu_si128((const __m128i*)&res->coeffs[8]);
-    const __m128i D0_m = _mm_min_epi16(c0, zero);
-    const __m128i D0_p = _mm_max_epi16(c0, zero);
-    const __m128i D1_m = _mm_min_epi16(c1, zero);
-    const __m128i D1_p = _mm_max_epi16(c1, zero);
-    const __m128i E0 = _mm_sub_epi16(D0_p, D0_m);   // abs(v), 16b
-    const __m128i E1 = _mm_sub_epi16(D1_p, D1_m);
+    const __m128i D0 = _mm_sub_epi16(zero, c0);
+    const __m128i D1 = _mm_sub_epi16(zero, c1);
+    const __m128i E0 = _mm_max_epi16(c0, D0);   // abs(v), 16b
+    const __m128i E1 = _mm_max_epi16(c1, D1);
     const __m128i F = _mm_packs_epi16(E0, E1);
     const __m128i G = _mm_min_epu8(F, kCst2);    // context = 0,1,2
     const __m128i H = _mm_min_epu8(F, kCst67);   // clamp_level in [0..67]
@@ -106,7 +101,6 @@ static int GetResidualCostSSE2(int ctx0, const VP8Residual* const res) {
   }
   return cost;
 }
-#endif   // WEBP_USE_SSE2
 
 //------------------------------------------------------------------------------
 // Entry point
@@ -114,8 +108,12 @@ static int GetResidualCostSSE2(int ctx0, const VP8Residual* const res) {
 extern void VP8EncDspCostInitSSE2(void);
 
 WEBP_TSAN_IGNORE_FUNCTION void VP8EncDspCostInitSSE2(void) {
-#if defined(WEBP_USE_SSE2)
   VP8SetResidualCoeffs = SetResidualCoeffsSSE2;
   VP8GetResidualCost = GetResidualCostSSE2;
-#endif   // WEBP_USE_SSE2
 }
+
+#else  // !WEBP_USE_SSE2
+
+WEBP_DSP_INIT_STUB(VP8EncDspCostInitSSE2)
+
+#endif  // WEBP_USE_SSE2

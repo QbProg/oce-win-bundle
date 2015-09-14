@@ -426,7 +426,7 @@ static int AllocateAndInitRescaler(VP8LDecoder* const dec, VP8Io* const io) {
   const uint64_t memory_size = sizeof(*dec->rescaler) +
                                work_size * sizeof(*work) +
                                scaled_data_size * sizeof(*scaled_data);
-  uint8_t* memory = (uint8_t*)WebPSafeCalloc(memory_size, sizeof(*memory));
+  uint8_t* memory = (uint8_t*)WebPSafeMalloc(memory_size, sizeof(*memory));
   if (memory == NULL) {
     dec->status_ = VP8_STATUS_OUT_OF_MEMORY;
     return 0;
@@ -441,8 +441,7 @@ static int AllocateAndInitRescaler(VP8LDecoder* const dec, VP8Io* const io) {
   scaled_data = (uint32_t*)memory;
 
   WebPRescalerInit(dec->rescaler, in_width, in_height, (uint8_t*)scaled_data,
-                   out_width, out_height, 0, num_channels,
-                   in_width, out_width, in_height, out_height, work);
+                   out_width, out_height, 0, num_channels, work);
   return 1;
 }
 
@@ -961,7 +960,7 @@ static int DecodeAlphaData(VP8LDecoder* const dec, uint8_t* const data,
     dec->status_ = br->eos_ ? VP8_STATUS_SUSPENDED
                             : VP8_STATUS_BITSTREAM_ERROR;
   } else {
-    dec->last_pixel_ = (int)pos;
+    dec->last_pixel_ = pos;
   }
   return ok;
 }

@@ -331,13 +331,11 @@ static void GradientUnfilter(int width, int height, int stride, int row,
 }
 
 //------------------------------------------------------------------------------
-
-#endif    // WEBP_USE_SSE2
+// Entry point
 
 extern void VP8FiltersInitSSE2(void);
 
 WEBP_TSAN_IGNORE_FUNCTION void VP8FiltersInitSSE2(void) {
-#if defined(WEBP_USE_SSE2)
   WebPUnfilters[WEBP_FILTER_HORIZONTAL] = HorizontalUnfilter;
   WebPUnfilters[WEBP_FILTER_VERTICAL] = VerticalUnfilter;
   WebPUnfilters[WEBP_FILTER_GRADIENT] = GradientUnfilter;
@@ -345,5 +343,10 @@ WEBP_TSAN_IGNORE_FUNCTION void VP8FiltersInitSSE2(void) {
   WebPFilters[WEBP_FILTER_HORIZONTAL] = HorizontalFilter;
   WebPFilters[WEBP_FILTER_VERTICAL] = VerticalFilter;
   WebPFilters[WEBP_FILTER_GRADIENT] = GradientFilter;
-#endif
 }
+
+#else  // !WEBP_USE_SSE2
+
+WEBP_DSP_INIT_STUB(VP8FiltersInitSSE2)
+
+#endif  // WEBP_USE_SSE2

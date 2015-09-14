@@ -24,14 +24,16 @@ static void ImportRow(WebPRescaler* const wrk,
   const int fx_scale = wrk->fx_scale;
   const int x_add = wrk->x_add;
   const int x_sub = wrk->x_sub;
+  const int src_width = wrk->src_width;
   int* frow = wrk->frow + channel;
   int* irow = wrk->irow + channel;
   const uint8_t* src1 = src + channel;
-  int temp1, temp2, temp3;
+  int temp1, temp2, temp3, temp4;
   int base, frac, sum;
   int accum, accum1;
   const int x_stride1 = x_stride << 2;
   int loop_c = x_out_max - channel;
+  int x_out = channel;
 
   if (!wrk->x_expand) {
     __asm__ volatile (
@@ -39,32 +41,29 @@ static void ImportRow(WebPRescaler* const wrk,
       "li         %[accum],   0                         \n\t"
     "1:                                                 \n\t"
       "addu       %[accum],   %[accum],   %[x_add]      \n\t"
+      "li         %[base],    0                         \n\t"
       "blez       %[accum],   3f                        \n\t"
     "2:                                                 \n\t"
-      "lbu        %[temp3],   0(%[src1])                \n\t"
+      "lbu        %[base],    0(%[src1])                \n\t"
       "subu       %[accum],   %[accum],   %[x_sub]      \n\t"
       "addu       %[src1],    %[src1],    %[x_stride]   \n\t"
-      "addu       %[sum],     %[sum],     %[temp3]      \n\t"
+      "addu       %[sum],     %[sum],     %[base]       \n\t"
       "bgtz       %[accum],   2b                        \n\t"
     "3:                                                 \n\t"
-      "lbu        %[base],    0(%[src1])                \n\t"
-      "addu       %[src1],    %[src1],    %[x_stride]   \n\t"
       "negu       %[accum1],  %[accum]                  \n\t"
       "mul        %[frac],    %[base],    %[accum1]     \n\t"
-      "addu       %[temp3],   %[sum],     %[base]       \n\t"
-      "mul        %[temp3],   %[temp3],   %[x_sub]      \n\t"
+      "mul        %[temp3],   %[sum],     %[x_sub]      \n\t"
       "lw         %[base],    0(%[irow])                \n\t"
       "sll        %[accum1],  %[frac],    1             \n\t"
       "subu       %[loop_c],  %[loop_c],  %[x_stride]   \n\t"
       "mulq_rs.w  %[sum],     %[accum1],  %[fx_scale]   \n\t"
       "subu       %[temp3],   %[temp3],   %[frac]       \n\t"
       "sw         %[temp3],   0(%[frow])                \n\t"
-      "add        %[base],    %[base],    %[temp3]      \n\t"
+      "addu       %[base],    %[base],    %[temp3]      \n\t"
       "sw         %[base],    0(%[irow])                \n\t"
       "addu       %[irow],    %[irow],    %[x_stride1]  \n\t"
       "addu       %[frow],    %[frow],    %[x_stride1]  \n\t"
       "bgtz       %[loop_c],  1b                        \n\t"
-
       : [accum]"=&r"(accum), [src1]"+&r"(src1), [temp3]"=&r"(temp3),
         [sum]"=&r"(sum), [base]"=&r"(base), [frac]"=&r"(frac),
         [frow]"+&r"(frow), [irow]"+&r"(irow), [accum1]"=&r"(accum1),
@@ -75,36 +74,46 @@ static void ImportRow(WebPRescaler* const wrk,
     );
   } else {
     __asm__ volatile (
-      "lbu    %[temp1],   0(%[src1])                \n\t"
-      "move   %[temp2],   %[temp1]                  \n\t"
-      "li     %[accum],   0                         \n\t"
-    "1:                                             \n\t"
-      "bgez   %[accum],   2f                        \n\t"
-      "move   %[temp2],   %[temp1]                  \n\t"
-      "addu   %[src1],    %[x_stride]               \n\t"
-      "lbu    %[temp1],   0(%[src1])                \n\t"
-      "addu   %[accum],   %[x_add]                  \n\t"
-    "2:                                             \n\t"
-      "subu   %[temp3],   %[temp2],   %[temp1]      \n\t"
-      "mul    %[temp3],   %[temp3],   %[accum]      \n\t"
-      "mul    %[base],    %[temp1],   %[x_add]      \n\t"
-      "subu   %[accum],   %[accum],   %[x_sub]      \n\t"
-      "lw     %[frac],    0(%[irow])                \n\t"
-      "subu   %[loop_c],  %[loop_c],  %[x_stride]   \n\t"
-      "addu   %[temp3],   %[base],    %[temp3]      \n\t"
-      "sw     %[temp3],   0(%[frow])                \n\t"
-      "addu   %[frow],    %[x_stride1]              \n\t"
-      "addu   %[frac],    %[temp3]                  \n\t"
-      "sw     %[frac],    0(%[irow])                \n\t"
-      "addu   %[irow],    %[x_stride1]              \n\t"
-      "bgtz   %[loop_c],  1b                        \n\t"
-
-      : [src1]"+&r"(src1), [accum]"=&r"(accum), [temp1]"=&r"(temp1),
-        [temp2]"=&r"(temp2), [temp3]"=&r"(temp3), [base]"=&r"(base),
-        [frac]"=&r"(frac), [frow]"+&r"(frow), [irow]"+&r"(irow),
-        [loop_c]"+&r"(loop_c)
-      : [x_stride]"r"(x_stride), [x_add]"r"(x_add), [x_sub]"r"(x_sub),
-        [x_stride1]"r"(x_stride1)
+      "addiu  %[temp3],   %[src_width], -1            \n\t"
+      "lbu    %[temp2],   0(%[src1])                  \n\t"
+      "addu   %[src1],    %[src1],      %[x_stride]   \n\t"
+      "bgtz   %[temp3],   0f                          \n\t"
+      "addiu  %[temp1],   %[temp2],     0             \n\t"
+      "b      3f                                      \n\t"
+    "0:                                               \n\t"
+      "lbu    %[temp1],   0(%[src1])                  \n\t"
+    "3:                                               \n\t"
+      "addiu  %[accum],   %[x_add],     0             \n\t"
+    "1:                                               \n\t"
+      "subu   %[temp3],   %[temp2],     %[temp1]      \n\t"
+      "mul    %[temp3],   %[temp3],     %[accum]      \n\t"
+      "mul    %[temp4],   %[temp1],     %[x_add]      \n\t"
+      "lw     %[frac],    0(%[irow])                  \n\t"
+      "addu   %[temp3],   %[temp4],     %[temp3]      \n\t"
+      "sw     %[temp3],   0(%[frow])                  \n\t"
+      "addu   %[frow],    %[frow],      %[x_stride1]  \n\t"
+      "addu   %[frac],    %[frac],      %[temp3]      \n\t"
+      "addu   %[x_out],   %[x_out],     %[x_stride]   \n\t"
+      "sw     %[frac],    0(%[irow])                  \n\t"
+      "subu   %[temp3],   %[x_out],     %[x_out_max]  \n\t"
+      "addu   %[irow],    %[irow],      %[x_stride1]  \n\t"
+      "bgez   %[temp3],   2f                          \n\t"
+      "subu   %[accum],   %[accum],     %[x_sub]      \n\t"
+      "bgez   %[accum],   4f                          \n\t"
+      "addiu  %[temp2],   %[temp1],     0             \n\t"
+      "addu   %[src1],    %[src1],      %[x_stride]   \n\t"
+      "lbu    %[temp1],   0(%[src1])                  \n\t"
+      "addu   %[accum],   %[accum],     %[x_add]      \n\t"
+    "4:                                               \n\t"
+      "b      1b                                      \n\t"
+    "2:                                               \n\t"
+      : [src1] "+r" (src1), [accum] "=&r" (accum), [temp1] "=&r" (temp1),
+        [temp2] "=&r" (temp2), [temp3] "=&r" (temp3), [temp4] "=&r" (temp4),
+        [x_out] "+r" (x_out), [frac] "=&r" (frac), [frow] "+r" (frow),
+        [irow] "+r" (irow)
+      : [x_stride] "r" (x_stride), [x_add] "r" (x_add), [x_sub] "r" (x_sub),
+        [x_stride1] "r" (x_stride1), [src_width] "r" (src_width),
+        [x_out_max] "r" (x_out_max)
       : "memory", "hi", "lo"
     );
   }
@@ -195,16 +204,18 @@ static void ExportRow(WebPRescaler* const wrk, int x_out) {
   }
 }
 
-#endif  // WEBP_USE_MIPS_DSP_R2
-
 //------------------------------------------------------------------------------
 // Entry point
 
 extern void WebPRescalerDspInitMIPSdspR2(void);
 
 WEBP_TSAN_IGNORE_FUNCTION void WebPRescalerDspInitMIPSdspR2(void) {
-#if defined(WEBP_USE_MIPS_DSP_R2)
   WebPRescalerImportRow = ImportRow;
   WebPRescalerExportRow = ExportRow;
-#endif  // WEBP_USE_MIPS_DSP_R2
 }
+
+#else  // !WEBP_USE_MIPS_DSP_R2
+
+WEBP_DSP_INIT_STUB(WebPRescalerDspInitMIPSdspR2)
+
+#endif  // WEBP_USE_MIPS_DSP_R2

@@ -124,16 +124,18 @@ static void MultARGBRow(uint32_t* const ptr, int width, int inverse) {
   }
 }
 
-#endif  // WEBP_USE_MIPS_DSP_R2
-
 //------------------------------------------------------------------------------
-// Init function
+// Entry point
 
 extern void WebPInitAlphaProcessingMIPSdspR2(void);
 
 WEBP_TSAN_IGNORE_FUNCTION void WebPInitAlphaProcessingMIPSdspR2(void) {
-#if defined(WEBP_USE_MIPS_DSP_R2)
   WebPDispatchAlpha = DispatchAlpha;
   WebPMultARGBRow = MultARGBRow;
-#endif
 }
+
+#else  // !WEBP_USE_MIPS_DSP_R2
+
+WEBP_DSP_INIT_STUB(WebPInitAlphaProcessingMIPSdspR2)
+
+#endif  // WEBP_USE_MIPS_DSP_R2

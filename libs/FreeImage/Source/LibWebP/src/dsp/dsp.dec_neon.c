@@ -24,24 +24,24 @@
 
 // Load/Store vertical edge
 #define LOAD8x4(c1, c2, c3, c4, b1, b2, stride)                                \
-  "vld4.8   {" #c1"[0], " #c2"[0], " #c3"[0], " #c4"[0]}," #b1 "," #stride"\n" \
-  "vld4.8   {" #c1"[1], " #c2"[1], " #c3"[1], " #c4"[1]}," #b2 "," #stride"\n" \
-  "vld4.8   {" #c1"[2], " #c2"[2], " #c3"[2], " #c4"[2]}," #b1 "," #stride"\n" \
-  "vld4.8   {" #c1"[3], " #c2"[3], " #c3"[3], " #c4"[3]}," #b2 "," #stride"\n" \
-  "vld4.8   {" #c1"[4], " #c2"[4], " #c3"[4], " #c4"[4]}," #b1 "," #stride"\n" \
-  "vld4.8   {" #c1"[5], " #c2"[5], " #c3"[5], " #c4"[5]}," #b2 "," #stride"\n" \
-  "vld4.8   {" #c1"[6], " #c2"[6], " #c3"[6], " #c4"[6]}," #b1 "," #stride"\n" \
-  "vld4.8   {" #c1"[7], " #c2"[7], " #c3"[7], " #c4"[7]}," #b2 "," #stride"\n"
+  "vld4.8 {" #c1 "[0]," #c2 "[0]," #c3 "[0]," #c4 "[0]}," #b1 "," #stride "\n" \
+  "vld4.8 {" #c1 "[1]," #c2 "[1]," #c3 "[1]," #c4 "[1]}," #b2 "," #stride "\n" \
+  "vld4.8 {" #c1 "[2]," #c2 "[2]," #c3 "[2]," #c4 "[2]}," #b1 "," #stride "\n" \
+  "vld4.8 {" #c1 "[3]," #c2 "[3]," #c3 "[3]," #c4 "[3]}," #b2 "," #stride "\n" \
+  "vld4.8 {" #c1 "[4]," #c2 "[4]," #c3 "[4]," #c4 "[4]}," #b1 "," #stride "\n" \
+  "vld4.8 {" #c1 "[5]," #c2 "[5]," #c3 "[5]," #c4 "[5]}," #b2 "," #stride "\n" \
+  "vld4.8 {" #c1 "[6]," #c2 "[6]," #c3 "[6]," #c4 "[6]}," #b1 "," #stride "\n" \
+  "vld4.8 {" #c1 "[7]," #c2 "[7]," #c3 "[7]," #c4 "[7]}," #b2 "," #stride "\n"
 
 #define STORE8x2(c1, c2, p, stride)                                            \
-  "vst2.8   {" #c1"[0], " #c2"[0]}," #p "," #stride " \n"                      \
-  "vst2.8   {" #c1"[1], " #c2"[1]}," #p "," #stride " \n"                      \
-  "vst2.8   {" #c1"[2], " #c2"[2]}," #p "," #stride " \n"                      \
-  "vst2.8   {" #c1"[3], " #c2"[3]}," #p "," #stride " \n"                      \
-  "vst2.8   {" #c1"[4], " #c2"[4]}," #p "," #stride " \n"                      \
-  "vst2.8   {" #c1"[5], " #c2"[5]}," #p "," #stride " \n"                      \
-  "vst2.8   {" #c1"[6], " #c2"[6]}," #p "," #stride " \n"                      \
-  "vst2.8   {" #c1"[7], " #c2"[7]}," #p "," #stride " \n"
+  "vst2.8   {" #c1 "[0], " #c2 "[0]}," #p "," #stride " \n"                    \
+  "vst2.8   {" #c1 "[1], " #c2 "[1]}," #p "," #stride " \n"                    \
+  "vst2.8   {" #c1 "[2], " #c2 "[2]}," #p "," #stride " \n"                    \
+  "vst2.8   {" #c1 "[3], " #c2 "[3]}," #p "," #stride " \n"                    \
+  "vst2.8   {" #c1 "[4], " #c2 "[4]}," #p "," #stride " \n"                    \
+  "vst2.8   {" #c1 "[5], " #c2 "[5]}," #p "," #stride " \n"                    \
+  "vst2.8   {" #c1 "[6], " #c2 "[6]}," #p "," #stride " \n"                    \
+  "vst2.8   {" #c1 "[7], " #c2 "[7]}," #p "," #stride " \n"
 
 #if !defined(WORK_AROUND_GCC)
 
@@ -479,6 +479,21 @@ static int8x16_t GetBaseDelta0(const int8x16_t p0, const int8x16_t q0) {
 
 //------------------------------------------------------------------------------
 
+static void ApplyFilter2NoFlip(const int8x16_t p0s, const int8x16_t q0s,
+                               const int8x16_t delta,
+                               int8x16_t* const op0, int8x16_t* const oq0) {
+  const int8x16_t kCst3 = vdupq_n_s8(0x03);
+  const int8x16_t kCst4 = vdupq_n_s8(0x04);
+  const int8x16_t delta_p3 = vqaddq_s8(delta, kCst3);
+  const int8x16_t delta_p4 = vqaddq_s8(delta, kCst4);
+  const int8x16_t delta3 = vshrq_n_s8(delta_p3, 3);
+  const int8x16_t delta4 = vshrq_n_s8(delta_p4, 3);
+  *op0 = vqaddq_s8(p0s, delta3);
+  *oq0 = vqsubq_s8(q0s, delta4);
+}
+
+#if defined(WEBP_USE_INTRINSICS)
+
 static void ApplyFilter2(const int8x16_t p0s, const int8x16_t q0s,
                          const int8x16_t delta,
                          uint8x16_t* const op0, uint8x16_t* const oq0) {
@@ -493,8 +508,6 @@ static void ApplyFilter2(const int8x16_t p0s, const int8x16_t q0s,
   *op0 = FlipSignBack(sp0);
   *oq0 = FlipSignBack(sq0);
 }
-
-#if defined(WEBP_USE_INTRINSICS)
 
 static void DoFilter2(const uint8x16_t p1, const uint8x16_t p0,
                       const uint8x16_t q0, const uint8x16_t q1,
@@ -721,11 +734,7 @@ static void DoFilter4(
     const int8x16_t delta = GetBaseDelta(p1s, p0s, q0s, q1s);
     const int8x16_t simple_lf_delta =
         vandq_s8(delta, vreinterpretq_s8_u8(simple_lf_mask));
-    uint8x16_t tmp_p0, tmp_q0;
-    ApplyFilter2(p0s, q0s, simple_lf_delta, &tmp_p0, &tmp_q0);
-    // TODO(skal): avoid the double FlipSign() in ApplyFilter2() and here
-    p0s = FlipSign(tmp_p0);
-    q0s = FlipSign(tmp_q0);
+    ApplyFilter2NoFlip(p0s, q0s, simple_lf_delta, &p0s, &q0s);
   }
 
   // do_filter4 part (complex loopfilter on pixels without hev)
@@ -797,11 +806,7 @@ static void DoFilter6(
   {
     const int8x16_t simple_lf_delta =
         vandq_s8(delta0, vreinterpretq_s8_u8(simple_lf_mask));
-    uint8x16_t tmp_p0, tmp_q0;
-    ApplyFilter2(p0s, q0s, simple_lf_delta, &tmp_p0, &tmp_q0);
-    // TODO(skal): avoid the double FlipSign() in ApplyFilter2() and here
-    p0s = FlipSign(tmp_p0);
-    q0s = FlipSign(tmp_q0);
+    ApplyFilter2NoFlip(p0s, q0s, simple_lf_delta, &p0s, &q0s);
   }
 
   // do_filter6 part (complex loopfilter on pixels without hev)
@@ -1241,7 +1246,7 @@ static void TransformWHT(const int16_t* in, int16_t* out) {
 static void TransformAC3(const int16_t* in, uint8_t* dst) {
   static const int kC1_full = 20091 + (1 << 16);
   static const int kC2_full = 35468;
-  const int16x4_t A = vdup_n_s16(in[0]);
+  const int16x4_t A = vld1_dup_s16(in);
   const int16x4_t c4 = vdup_n_s16(MUL(in[4], kC2_full));
   const int16x4_t d4 = vdup_n_s16(MUL(in[4], kC1_full));
   const int c1 = MUL(in[1], kC2_full);
@@ -1283,20 +1288,16 @@ static void DC4(uint8_t* dst) {    // DC
 
 // TrueMotion (4x4 + 8x8)
 static WEBP_INLINE void TrueMotion(uint8_t* dst, int size) {
-  const uint8x8_t TL = vdup_n_u8(dst[-BPS - 1]);  // top-left pixel 'A[-1]'
+  const uint8x8_t TL = vld1_dup_u8(dst - BPS - 1);  // top-left pixel 'A[-1]'
   const uint8x8_t T = vld1_u8(dst - BPS);  // top row 'A[0..3]'
   const int16x8_t d = vreinterpretq_s16_u16(vsubl_u8(T, TL));  // A[c] - A[-1]
   int y;
   for (y = 0; y < size; y += 4) {
     // left edge
-    const int16x8_t l0 = ConvertU8ToS16(vld1_u8(dst + 0 * BPS - 1));
-    const int16x8_t l1 = ConvertU8ToS16(vld1_u8(dst + 1 * BPS - 1));
-    const int16x8_t l2 = ConvertU8ToS16(vld1_u8(dst + 2 * BPS - 1));
-    const int16x8_t l3 = ConvertU8ToS16(vld1_u8(dst + 3 * BPS - 1));
-    const int16x8_t L0 = vdupq_lane_s16(vget_low_s16(l0), 0);
-    const int16x8_t L1 = vdupq_lane_s16(vget_low_s16(l1), 0);
-    const int16x8_t L2 = vdupq_lane_s16(vget_low_s16(l2), 0);
-    const int16x8_t L3 = vdupq_lane_s16(vget_low_s16(l3), 0);
+    const int16x8_t L0 = ConvertU8ToS16(vld1_dup_u8(dst + 0 * BPS - 1));
+    const int16x8_t L1 = ConvertU8ToS16(vld1_dup_u8(dst + 1 * BPS - 1));
+    const int16x8_t L2 = ConvertU8ToS16(vld1_dup_u8(dst + 2 * BPS - 1));
+    const int16x8_t L3 = ConvertU8ToS16(vld1_dup_u8(dst + 3 * BPS - 1));
     const int16x8_t r0 = vaddq_s16(L0, d);  // L[r] + A[c] - A[-1]
     const int16x8_t r1 = vaddq_s16(L1, d);
     const int16x8_t r2 = vaddq_s16(L2, d);
@@ -1389,6 +1390,23 @@ static void LD4(uint8_t* dst) {    // Down-left
 //------------------------------------------------------------------------------
 // Chroma
 
+static void VE8uv(uint8_t* dst) {    // vertical
+  const uint8x8_t top = vld1_u8(dst - BPS);
+  int j;
+  for (j = 0; j < 8; ++j) {
+    vst1_u8(dst + j * BPS, top);
+  }
+}
+
+static void HE8uv(uint8_t* dst) {    // horizontal
+  int j;
+  for (j = 0; j < 8; ++j) {
+    const uint8x8_t left = vld1_dup_u8(dst - 1);
+    vst1_u8(dst, left);
+    dst += BPS;
+  }
+}
+
 static WEBP_INLINE void DC8(uint8_t* dst, int do_top, int do_left) {
   uint16x8_t sum_top;
   uint16x8_t sum_left;
@@ -1425,8 +1443,10 @@ static WEBP_INLINE void DC8(uint8_t* dst, int do_top, int do_left) {
     dc0 = vrshrn_n_u16(sum, 4);
   } else if (do_top) {
     dc0 = vrshrn_n_u16(sum_top, 3);
-  } else {
+  } else if (do_left) {
     dc0 = vrshrn_n_u16(sum_left, 3);
+  } else {
+    dc0 = vdup_n_u8(0x80);
   }
 
   {
@@ -1441,10 +1461,125 @@ static WEBP_INLINE void DC8(uint8_t* dst, int do_top, int do_left) {
 static void DC8uv(uint8_t* dst) { DC8(dst, 1, 1); }
 static void DC8uvNoTop(uint8_t* dst) { DC8(dst, 0, 1); }
 static void DC8uvNoLeft(uint8_t* dst) { DC8(dst, 1, 0); }
+static void DC8uvNoTopLeft(uint8_t* dst) { DC8(dst, 0, 0); }
 
 static void TM8uv(uint8_t* dst) { TrueMotion(dst, 8); }
 
-#endif   // WEBP_USE_NEON
+//------------------------------------------------------------------------------
+// 16x16
+
+static void VE16(uint8_t* dst) {     // vertical
+  const uint8x16_t top = vld1q_u8(dst - BPS);
+  int j;
+  for (j = 0; j < 16; ++j) {
+    vst1q_u8(dst + j * BPS, top);
+  }
+}
+
+static void HE16(uint8_t* dst) {     // horizontal
+  int j;
+  for (j = 0; j < 16; ++j) {
+    const uint8x16_t left = vld1q_dup_u8(dst - 1);
+    vst1q_u8(dst, left);
+    dst += BPS;
+  }
+}
+
+static WEBP_INLINE void DC16(uint8_t* dst, int do_top, int do_left) {
+  uint16x8_t sum_top;
+  uint16x8_t sum_left;
+  uint8x8_t dc0;
+
+  if (do_top) {
+    const uint8x16_t A = vld1q_u8(dst - BPS);  // top row
+    const uint16x8_t p0 = vpaddlq_u8(A);  // cascading summation of the top
+    const uint16x4_t p1 = vadd_u16(vget_low_u16(p0), vget_high_u16(p0));
+    const uint16x4_t p2 = vpadd_u16(p1, p1);
+    const uint16x4_t p3 = vpadd_u16(p2, p2);
+    sum_top = vcombine_u16(p3, p3);
+  }
+
+  if (do_left) {
+    int i;
+    sum_left = vdupq_n_u16(0);
+    for (i = 0; i < 16; i += 8) {
+      const uint16x8_t L0 = vmovl_u8(vld1_u8(dst + (i + 0) * BPS - 1));
+      const uint16x8_t L1 = vmovl_u8(vld1_u8(dst + (i + 1) * BPS - 1));
+      const uint16x8_t L2 = vmovl_u8(vld1_u8(dst + (i + 2) * BPS - 1));
+      const uint16x8_t L3 = vmovl_u8(vld1_u8(dst + (i + 3) * BPS - 1));
+      const uint16x8_t L4 = vmovl_u8(vld1_u8(dst + (i + 4) * BPS - 1));
+      const uint16x8_t L5 = vmovl_u8(vld1_u8(dst + (i + 5) * BPS - 1));
+      const uint16x8_t L6 = vmovl_u8(vld1_u8(dst + (i + 6) * BPS - 1));
+      const uint16x8_t L7 = vmovl_u8(vld1_u8(dst + (i + 7) * BPS - 1));
+      const uint16x8_t s0 = vaddq_u16(L0, L1);
+      const uint16x8_t s1 = vaddq_u16(L2, L3);
+      const uint16x8_t s2 = vaddq_u16(L4, L5);
+      const uint16x8_t s3 = vaddq_u16(L6, L7);
+      const uint16x8_t s01 = vaddq_u16(s0, s1);
+      const uint16x8_t s23 = vaddq_u16(s2, s3);
+      const uint16x8_t sum = vaddq_u16(s01, s23);
+      sum_left = vaddq_u16(sum_left, sum);
+    }
+  }
+
+  if (do_top && do_left) {
+    const uint16x8_t sum = vaddq_u16(sum_left, sum_top);
+    dc0 = vrshrn_n_u16(sum, 5);
+  } else if (do_top) {
+    dc0 = vrshrn_n_u16(sum_top, 4);
+  } else if (do_left) {
+    dc0 = vrshrn_n_u16(sum_left, 4);
+  } else {
+    dc0 = vdup_n_u8(0x80);
+  }
+
+  {
+    const uint8x16_t dc = vdupq_lane_u8(dc0, 0);
+    int i;
+    for (i = 0; i < 16; ++i) {
+      vst1q_u8(dst + i * BPS, dc);
+    }
+  }
+}
+
+static void DC16TopLeft(uint8_t* dst) { DC16(dst, 1, 1); }
+static void DC16NoTop(uint8_t* dst) { DC16(dst, 0, 1); }
+static void DC16NoLeft(uint8_t* dst) { DC16(dst, 1, 0); }
+static void DC16NoTopLeft(uint8_t* dst) { DC16(dst, 0, 0); }
+
+static void TM16(uint8_t* dst) {
+  const uint8x8_t TL = vld1_dup_u8(dst - BPS - 1);  // top-left pixel 'A[-1]'
+  const uint8x16_t T = vld1q_u8(dst - BPS);  // top row 'A[0..15]'
+  // A[c] - A[-1]
+  const int16x8_t d_lo = vreinterpretq_s16_u16(vsubl_u8(vget_low_u8(T), TL));
+  const int16x8_t d_hi = vreinterpretq_s16_u16(vsubl_u8(vget_high_u8(T), TL));
+  int y;
+  for (y = 0; y < 16; y += 4) {
+    // left edge
+    const int16x8_t L0 = ConvertU8ToS16(vld1_dup_u8(dst + 0 * BPS - 1));
+    const int16x8_t L1 = ConvertU8ToS16(vld1_dup_u8(dst + 1 * BPS - 1));
+    const int16x8_t L2 = ConvertU8ToS16(vld1_dup_u8(dst + 2 * BPS - 1));
+    const int16x8_t L3 = ConvertU8ToS16(vld1_dup_u8(dst + 3 * BPS - 1));
+    const int16x8_t r0_lo = vaddq_s16(L0, d_lo);  // L[r] + A[c] - A[-1]
+    const int16x8_t r1_lo = vaddq_s16(L1, d_lo);
+    const int16x8_t r2_lo = vaddq_s16(L2, d_lo);
+    const int16x8_t r3_lo = vaddq_s16(L3, d_lo);
+    const int16x8_t r0_hi = vaddq_s16(L0, d_hi);
+    const int16x8_t r1_hi = vaddq_s16(L1, d_hi);
+    const int16x8_t r2_hi = vaddq_s16(L2, d_hi);
+    const int16x8_t r3_hi = vaddq_s16(L3, d_hi);
+    // Saturate and store the result.
+    const uint8x16_t row0 = vcombine_u8(vqmovun_s16(r0_lo), vqmovun_s16(r0_hi));
+    const uint8x16_t row1 = vcombine_u8(vqmovun_s16(r1_lo), vqmovun_s16(r1_hi));
+    const uint8x16_t row2 = vcombine_u8(vqmovun_s16(r2_lo), vqmovun_s16(r2_hi));
+    const uint8x16_t row3 = vcombine_u8(vqmovun_s16(r3_lo), vqmovun_s16(r3_hi));
+    vst1q_u8(dst + 0 * BPS, row0);
+    vst1q_u8(dst + 1 * BPS, row1);
+    vst1q_u8(dst + 2 * BPS, row2);
+    vst1q_u8(dst + 3 * BPS, row3);
+    dst += 4 * BPS;
+  }
+}
 
 //------------------------------------------------------------------------------
 // Entry point
@@ -1452,7 +1587,6 @@ static void TM8uv(uint8_t* dst) { TrueMotion(dst, 8); }
 extern void VP8DspInitNEON(void);
 
 WEBP_TSAN_IGNORE_FUNCTION void VP8DspInitNEON(void) {
-#if defined(WEBP_USE_NEON)
   VP8Transform = TransformTwo;
   VP8TransformAC3 = TransformAC3;
   VP8TransformDC = TransformDC;
@@ -1481,9 +1615,25 @@ WEBP_TSAN_IGNORE_FUNCTION void VP8DspInitNEON(void) {
   VP8PredLuma4[4] = RD4;
   VP8PredLuma4[6] = LD4;
 
+  VP8PredLuma16[0] = DC16TopLeft;
+  VP8PredLuma16[1] = TM16;
+  VP8PredLuma16[2] = VE16;
+  VP8PredLuma16[3] = HE16;
+  VP8PredLuma16[4] = DC16NoTop;
+  VP8PredLuma16[5] = DC16NoLeft;
+  VP8PredLuma16[6] = DC16NoTopLeft;
+
   VP8PredChroma8[0] = DC8uv;
   VP8PredChroma8[1] = TM8uv;
+  VP8PredChroma8[2] = VE8uv;
+  VP8PredChroma8[3] = HE8uv;
   VP8PredChroma8[4] = DC8uvNoTop;
   VP8PredChroma8[5] = DC8uvNoLeft;
-#endif   // WEBP_USE_NEON
+  VP8PredChroma8[6] = DC8uvNoTopLeft;
 }
+
+#else  // !WEBP_USE_NEON
+
+WEBP_DSP_INIT_STUB(VP8DspInitNEON)
+
+#endif  // WEBP_USE_NEON

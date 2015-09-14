@@ -52,12 +52,21 @@ extern "C" {
 #define WEBP_MSC_SSE2  // Visual C++ SSE2 targets
 #endif
 
+#if defined(_MSC_VER) && _MSC_VER >= 1500 && \
+    (defined(_M_X64) || defined(_M_IX86))
+#define WEBP_MSC_SSE41  // Visual C++ SSE4.1 targets
+#endif
+
 // WEBP_HAVE_* are used to indicate the presence of the instruction set in dsp
 // files without intrinsics, allowing the corresponding Init() to be called.
 // Files containing intrinsics will need to be built targeting the instruction
 // set so should succeed on one of the earlier tests.
 #if defined(__SSE2__) || defined(WEBP_MSC_SSE2) || defined(WEBP_HAVE_SSE2)
 #define WEBP_USE_SSE2
+#endif
+
+#if defined(__SSE4_1__) || defined(WEBP_MSC_SSE41) || defined(WEBP_HAVE_SSE41)
+#define WEBP_USE_SSE41
 #endif
 
 #if defined(__AVX2__) || defined(WEBP_HAVE_AVX2)
@@ -68,7 +77,10 @@ extern "C" {
 #define WEBP_ANDROID_NEON  // Android targets that might support NEON
 #endif
 
-#if defined(__ARM_NEON__) || defined(WEBP_ANDROID_NEON) || defined(__aarch64__)
+// The intrinsics currently cause compiler errors with arm-nacl-gcc and the
+// inline assembly would need to be modified for use with Native Client.
+#if (defined(__ARM_NEON__) || defined(WEBP_ANDROID_NEON) || \
+     defined(__aarch64__)) && !defined(__native_client__)
 #define WEBP_USE_NEON
 #endif
 
@@ -77,7 +89,8 @@ extern "C" {
 #define WEBP_USE_INTRINSICS
 #endif
 
-#if defined(__mips__) && !defined(__mips64) && (__mips_isa_rev < 6)
+#if defined(__mips__) && !defined(__mips64) && \
+    defined(__mips_isa_rev) && (__mips_isa_rev >= 1) && (__mips_isa_rev < 6)
 #define WEBP_USE_MIPS32
 #if (__mips_isa_rev >= 2)
 #define WEBP_USE_MIPS32_R2
@@ -99,6 +112,7 @@ extern "C" {
 typedef enum {
   kSSE2,
   kSSE3,
+  kSSE4_1,
   kAVX,
   kAVX2,
   kNEON,
@@ -108,6 +122,15 @@ typedef enum {
 // returns true if the CPU supports the feature.
 typedef int (*VP8CPUInfo)(CPUFeature feature);
 WEBP_EXTERN(VP8CPUInfo) VP8GetCPUInfo;
+
+//------------------------------------------------------------------------------
+// Init stub generator
+
+// Defines an init function stub to ensure each module exposes a symbol,
+// avoiding a compiler warning.
+#define WEBP_DSP_INIT_STUB(func) \
+  extern void func(void); \
+  WEBP_TSAN_IGNORE_FUNCTION void func(void) {}
 
 //------------------------------------------------------------------------------
 // Encoding
@@ -121,6 +144,7 @@ typedef void (*VP8Fdct)(const uint8_t* src, const uint8_t* ref, int16_t* out);
 typedef void (*VP8WHT)(const int16_t* in, int16_t* out);
 extern VP8Idct VP8ITransform;
 extern VP8Fdct VP8FTransform;
+extern VP8Fdct VP8FTransform2;   // performs two transforms at a time
 extern VP8WHT VP8FTransformWHT;
 // Predictions
 // *dst is the destination block. *top and *left can be NULL.
@@ -170,8 +194,8 @@ typedef void (*VP8CHisto)(const uint8_t* ref, const uint8_t* pred,
                           VP8Histogram* const histo);
 extern VP8CHisto VP8CollectHistogram;
 // General-purpose util function to help VP8CollectHistogram().
-void VP8LSetHistogramData(const int distribution[MAX_COEFF_THRESH + 1],
-                          VP8Histogram* const histo);
+void VP8SetHistogramData(const int distribution[MAX_COEFF_THRESH + 1],
+                         VP8Histogram* const histo);
 
 // must be called before using any of the above
 void VP8EncDspInit(void);

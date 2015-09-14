@@ -26,13 +26,13 @@ extern "C" {
 typedef struct WebPRescaler WebPRescaler;
 struct WebPRescaler {
   int x_expand;               // true if we're expanding in the x direction
+  int y_expand;               // true if we're expanding in the y direction
   int num_channels;           // bytes to jump between pixels
   int fy_scale, fx_scale;     // fixed-point scaling factor
   int64_t fxy_scale;          // ''
-  // we need hpel-precise add/sub increments, for the downsampled U/V planes.
   int y_accum;                // vertical accumulator
-  int y_add, y_sub;           // vertical increments (add ~= src, sub ~= dst)
-  int x_add, x_sub;           // horizontal increments (add ~= src, sub ~= dst)
+  int y_add, y_sub;           // vertical increments
+  int x_add, x_sub;           // horizontal increments
   int src_width, src_height;  // source dimensions
   int dst_width, dst_height;  // destination dimensions
   uint8_t* dst;
@@ -46,9 +46,15 @@ void WebPRescalerInit(WebPRescaler* const rescaler,
                       uint8_t* const dst,
                       int dst_width, int dst_height, int dst_stride,
                       int num_channels,
-                      int x_add, int x_sub,
-                      int y_add, int y_sub,
                       int32_t* const work);
+
+// If either 'scaled_width' or 'scaled_height' (but not both) is 0 the value
+// will be calculated preserving the aspect ratio, otherwise the values are
+// left unmodified. Returns true on success, false if either value is 0 after
+// performing the scaling calculation.
+int WebPRescalerGetScaledDimensions(int src_width, int src_height,
+                                    int* const scaled_width,
+                                    int* const scaled_height);
 
 // Returns the number of input lines needed next to produce one output line,
 // considering that the maximum available input lines are 'max_num_lines'.

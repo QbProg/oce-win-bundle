@@ -181,11 +181,7 @@ static void RescalePlane(const uint8_t* src,
   int y = 0;
   WebPRescalerInit(&rescaler, src_width, src_height,
                    dst, dst_width, dst_height, dst_stride,
-                   num_channels,
-                   src_width, dst_width,
-                   src_height, dst_height,
-                   work);
-  memset(work, 0, 2 * dst_width * num_channels * sizeof(*work));
+                   num_channels, work);
   while (y < src_height) {
     y += WebPRescalerImport(&rescaler, src_height - y,
                             src + y * src_stride, src_stride);
@@ -214,16 +210,10 @@ int WebPPictureRescale(WebPPicture* pic, int width, int height) {
   if (pic == NULL) return 0;
   prev_width = pic->width;
   prev_height = pic->height;
-  // if width is unspecified, scale original proportionally to height ratio.
-  if (width == 0) {
-    width = (prev_width * height + prev_height / 2) / prev_height;
+  if (!WebPRescalerGetScaledDimensions(
+          prev_width, prev_height, &width, &height)) {
+    return 0;
   }
-  // if height is unspecified, scale original proportionally to width ratio.
-  if (height == 0) {
-    height = (prev_height * width + prev_width / 2) / prev_width;
-  }
-  // Check if the overall dimensions still make sense.
-  if (width <= 0 || height <= 0) return 0;
 
   PictureGrabSpecs(pic, &tmp);
   tmp.width = width;
